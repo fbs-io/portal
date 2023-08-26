@@ -3,8 +3,8 @@
  * @version: 1.10
  * @Author: sakuya
  * @Date: 2021年11月29日21:51:15
- * @LastEditors: sakuya
- * @LastEditTime: 2022年6月4日17:35:26
+ * @LastEditors: reel
+ * @LastEditTime: 2023-08-25 06:16:43
 -->
 
 <template>
@@ -180,9 +180,8 @@
 					delete reqData[config.request.pageSize]
 				}
 				Object.assign(reqData, this.tableParams)
-
 				try {
-					var res = await this.apiObj.get(reqData);
+					var res = await this.apiObj(reqData);
 				}catch(error){
 					this.loading = false;
 					this.emptyText = error.statusText;
@@ -195,6 +194,7 @@
 					this.emptyText = "数据格式错误";
 					return false;
 				}
+				console.log(response)
 				if(response.code != config.successCode){
 					this.loading = false;
 					this.emptyText = response.msg;
@@ -205,8 +205,9 @@
 					}else{
 						this.tableData = response.rows || [];
 					}
+					console.log(this.tableData)
 					this.total = response.total || 0;
-					this.summary = response.summary || {};
+					// this.summary = response.summary || {};
 					this.loading = false;
 				}
 				this.$refs.scTable.setScrollTop(0)

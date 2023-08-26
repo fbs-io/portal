@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-08-21 23:48:11
+ * @LastEditTime: 2023-08-26 20:53:50
  * @Description: 请填写简介
  */
 package auth
@@ -28,13 +28,13 @@ func login() core.HandlerFunc {
 		user := &User{}
 		err := tx.Find(user).Error
 		if err != nil {
-			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD.ToMap())
+			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
 			return
 		}
 		err = user.CheckPwd(p.Password)
 
 		if err != nil {
-			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD.ToMap())
+			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
 			return
 		}
 		// session 设置
@@ -56,6 +56,6 @@ func login() core.HandlerFunc {
 		}
 
 		SetUser(user.ID, user)
-		ctx.JSON(errno.ERRNO_OK.ToMapWithData(result))
+		ctx.JSON(errno.ERRNO_OK.WrapData(result).Notify())
 	}
 }

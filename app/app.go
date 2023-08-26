@@ -2,22 +2,21 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-08-21 20:51:37
+ * @LastEditTime: 2023-08-23 20:39:11
  * @Description: 业务代码，加载各个模块
  */
 package app
 
 import (
-	"fbs-portal/app/auth"
-	"fmt"
+	"fbs-portal/app/basis"
 
 	"github.com/fbs-io/core"
 )
 
 func New(c core.Core) {
 	// 中间件使用
-	core.AddAllowResource(fmt.Sprintf("%s:%s", "POST", "/ajax/login"))
-	
+	// core.AddAllowResource(fmt.Sprintf("%s:%s", "POST", "/ajax/basis/user/login"))
+
 	c.Engine().Use(core.LimiterMiddleware(c))
 	c.Engine().Use(core.CorsMiddleware(c))
 	c.Engine().Use(core.SignatureMiddleware(c, core.SINGULAR_TYPE_CSRF_TOKEN))
@@ -25,12 +24,14 @@ func New(c core.Core) {
 	c.Engine().Use(core.LogMiddleware(c))
 	c.Engine().Use(core.ParamsMiddleware(c))
 
-	auth.New(c)
-
-	ajax := c.Group("ajax")
+	// 加载
+	ajax := c.Group("ajax").WithPermission(core.SOURCE_TYPE_LIMITED)
 	{
 		_ = ajax.Group("home", "首页").WithPermission(core.SOURCE_TYPE_UNMENU)
 
 	}
+
+	// 初始化basis模块
+	basis.New(ajax)
 
 }

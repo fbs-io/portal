@@ -20,7 +20,7 @@
 					</div>
 					<div class="right-panel">
 						<div class="right-panel-search">
-							<el-input v-model="search.name" placeholder="登录账号 / 姓名" clearable></el-input>
+							<el-input v-model="search.nick_name" placeholder="姓名" clearable></el-input>
 							<el-button type="primary" icon="el-icon-search" @click="upsearch"></el-button>
 						</div>
 					</div>
@@ -28,16 +28,16 @@
 				<el-main class="nopadding">
 					<scTable ref="table" :apiObj="apiObj" @selection-change="selectionChange" stripe remoteSort remoteFilter>
 						<el-table-column type="selection" width="50"></el-table-column>
-						<el-table-column label="ID" prop="id" width="80" sortable='custom'></el-table-column>
-						<el-table-column label="头像" width="80" column-key="filterAvatar" :filters="[{text: '已上传', value: '1'}, {text: '未上传', value: '0'}]">
+						<el-table-column label="ID" prop="ID" column-key="ID" width="80" sortable='custom'></el-table-column>
+						<!-- <el-table-column label="头像" width="80" column-key="Av" :filters="[{text: '已上传', value: '1'}, {text: '未上传', value: '0'}]">
 							<template #default="scope">
 								<el-avatar :src="scope.row.avatar" size="small"></el-avatar>
 							</template>
-						</el-table-column>
-						<el-table-column label="登录账号" prop="userName" width="150" sortable='custom' column-key="filterUserName" :filters="[{text: '系统账号', value: '1'}, {text: '普通账号', value: '0'}]"></el-table-column>
-						<el-table-column label="姓名" prop="name" width="150" sortable='custom'></el-table-column>
-						<el-table-column label="所属角色" prop="groupName" width="200" sortable='custom'></el-table-column>
-						<el-table-column label="加入时间" prop="date" width="170" sortable='custom'></el-table-column>
+						</el-table-column> -->
+						<el-table-column label="登录账号" prop="account" width="150" sortable='custom' column-key="Account" :filters="[{text: '系统账号', value: '1'}, {text: '普通账号', value: '0'}]"></el-table-column>
+						<el-table-column label="姓名" prop="nick_name" width="150" sortable='custom'></el-table-column>
+						<el-table-column label="所属角色" prop="role" width="200" sortable='custom'></el-table-column>
+						<el-table-column label="加入时间" prop="create_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
 						<el-table-column label="操作" fixed="right" align="right" width="160">
 							<template #default="scope">
 								<el-button-group>
@@ -77,10 +77,10 @@
 				showGrouploading: false,
 				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.system.user.list,
+				apiObj: this.$API.user.users.get,
 				selection: [],
 				search: {
-					name: null
+					nick_name: null
 				}
 			}
 		},
@@ -152,10 +152,10 @@
 			//加载树数据
 			async getGroup(){
 				this.showGrouploading = true;
-				var res = await this.$API.system.dept.list.get();
+				var res = await this.$API.user.users.get();
 				this.showGrouploading = false;
 				var allNode ={id: '', label: '所有'}
-				res.data.unshift(allNode);
+				// res.data.unshift(allNode);
 				this.group = res.data;
 			},
 			//树过滤
@@ -184,7 +184,18 @@
 						Object.assign(item, data)
 					})
 				}
-			}
+			},
+			// 时间序列化
+			timestampToTime (row, column) {
+				var date = new Date(row.create_at) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
+				var Y = date.getFullYear() + '-'
+				var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-'
+				var D = date.getDate() + ' '
+				var h = date.getHours() + ':'
+				var m = date.getMinutes() + ':'
+				var s = date.getSeconds()
+				return Y+M+D+h+m+s
+			},
 		}
 	}
 </script>

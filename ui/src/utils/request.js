@@ -38,11 +38,13 @@ axios.interceptors.response.use(
 				expires: 30*60
 			})
 		}
-		if (response.data.errno ==0){
-			ElNotification.success({
-				title: '请求成功',
-				message: "Sucess"
-			})
+		if (response.data.errno ==0 ){
+			if( response.data.notify){
+				ElNotification.success({
+					title: '请求成功',
+					message: "Success"
+				})
+			}
 		}else if (response.data.errno ==40001) {
 				ElMessageBox.confirm('当前用户已被登出或无权限访问当前资源，请尝试重新登录后再操作。', '无权限访问', {
 					type: 'error',

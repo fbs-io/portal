@@ -2,18 +2,15 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-08-22 06:53:51
+ * @LastEditTime: 2023-08-26 21:31:50
  * @Description: 用户信息相关接口
  */
 package auth
 
 import (
-	"fmt"
-
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/store/rdb"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // TODO:补充其他用户信息, 如部门等
@@ -28,29 +25,22 @@ type userUpdateParams struct {
 func userUpdate() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*userUpdateParams)
-		user := GetUser(param.ID)
 		tx := ctx.TX()
+		user := GetUser(param.ID, tx)
 		if user == nil {
-			user = &User{}
-			err := tx.Model(user).Find(user).Error
-			if err != nil {
-				ctx.JSON(errno.ERRNO_RDB_QUERY.ToMapWithError(err))
-				return
-			}
-		}
-		user.NickName = param.NickName
-		user.Email = param.Email
-		user.Role = param.Role
-		user.ID = param.ID
-		err := tx.Updates(user).Error
-		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_UPDATE.ToMapWithError(err))
+			ctx.JSON(errno.ERRNO_RDB_QUERY)
 			return
 		}
-		ctx.JSON(errno.ERRNO_OK.ToMapWithData(user.UserInfo()))
+		err := user.update(tx, param)
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
 	}
 }
 
+// 密码修改参数
 type userChPwdParams struct {
 	ID      uint   `json:"id"  binding:"required"`
 	OldPwd  string `json:"old_pwd" binding:"required" conditions:"-"`
@@ -61,35 +51,47 @@ type userChPwdParams struct {
 func chpwd() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*userChPwdParams)
-		user := GetUser(param.ID)
 		tx := ctx.TX()
+		user := GetUser(param.ID, tx)
 		if user == nil {
-			user = &User{}
-			err := tx.Model(user).Find(user).Error
-			if err != nil {
-				ctx.JSON(errno.ERRNO_RDB_QUERY.ToMapWithError(err))
-				return
-			}
-		}
-		fmt.Println(user)
-		err := user.CheckPwd(param.OldPwd)
-		if err != nil {
-			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD.ToMapWithError(err))
+			ctx.JSON(errno.ERRNO_RDB_QUERY.ToMap())
 			return
 		}
-		user.Password = param.NewPwd
-		pb, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		err := user.chpwd(tx, param)
 		if err != nil {
-			ctx.JSON(errno.ERRNO_SYSTEM.ToMapWithError(err))
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
 			return
 		}
-		user.Password = string(pb)
-		err = tx.Save(user).Error
-		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_UPDATE.ToMapWithError(err))
-			return
-		}
+		ctx.JSON(errno.ERRNO_OK.Notify())
+	}
+}
 
-		ctx.JSON(errno.ERRNO_OK.ToMap())
+// orders, page_num, page_size 作为保留字段用于条件生成
+type userListQueryParams struct {
+	PageNum  int    `form:"page_num"`
+	PageSize int    `form:"page_size"`
+	Orders   string `form:"orders"`
+	Name     string `form:"nick_name" conditions:"like"`
+}
+
+func userListQuery() core.HandlerFunc {
+	return func(ctx core.Context) {
+		param := ctx.CtxGetParams().(*userListQueryParams)
+		tx := ctx.TX()
+		users := make([]*UserList, 0, 100)
+		err := tx.Model(&User{}).Find(&users).Error
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
+			return
+		}
+		var count int64
+		tx.Model(&User{}).Count(&count)
+		data := map[string]interface{}{
+			"page_num":  param.PageNum,
+			"page_size": param.PageSize,
+			"total":     count,
+			"rows":      users,
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(data))
 	}
 }

@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-22 07:11:08
+ * @LastEditTime: 2023-08-26 22:03:51
  * @Description: 请填写简介
 -->
 <template>
@@ -74,11 +74,7 @@
 							new_pwd2: this.form.confirmNewPassword
 					}
 				var res = await this.$API.user.chPwd.put(data)
-					console.log(res)
-							console.log(res.errno)
 					if(res.errno == 0){
-							console.log(res)
-							console.log(res.errno)
 							this.$alert("密码修改成功，是否跳转至登录页使用新密码登录", "修改成功", {
 								type: 'success',
 								center: true
@@ -89,36 +85,6 @@
 								
 							}).catch(() => {})
 					}
-				// this.$refs.form.validate(valid => {
-				// 	if (valid) {
-				// 		var data = {
-				// 			id: account.id,
-				// 			old_pwd: this.form.userPassword,
-				// 			new_pwd: this.form.newPassword,
-				// 			new_pwd2: this.form.confirmNewPassword
-				// 		}
-
-				// 		// 更新密码
-				// 		var res = await this.$API.user.chPwd.put(data)
-				// 		console.log(res)
-				// 				console.log(res.errno)
-				// 		if(res.errno == 0){
-				// 				console.log(res)
-				// 				console.log(res.errno)
-				// 				this.$alert("密码修改成功，是否跳转至登录页使用新密码登录", "修改成功", {
-				// 					type: 'success',
-				// 					center: true
-				// 				}).then(() => {
-				// 					this.$router.replace({
-				// 						path: '/login'
-				// 					})
-				// 				}).catch(() => {})
-				// 		}
-				// 	}else{
-				// 		return false
-				// 	}
-					
-				// })
 			}
 		}
 	}
