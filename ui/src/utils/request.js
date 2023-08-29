@@ -27,7 +27,7 @@ axios.interceptors.request.use(
 		return Promise.reject(error);
 	}
 );
-
+var isReloadLogin = false
 // HTTP response 拦截器
 axios.interceptors.response.use(
 	(response) => {
@@ -46,19 +46,24 @@ axios.interceptors.response.use(
 				})
 			}
 		}else if (response.data.errno ==40001) {
+			if (!isReloadLogin){
+				isReloadLogin = true
 				ElMessageBox.confirm('当前用户已被登出或无权限访问当前资源，请尝试重新登录后再操作。', '无权限访问', {
-					type: 'error',
-					closeOnClickModal: false,
-					center: true,
-					confirmButtonText: '重新登录'
+					 type: 'error',
+					 closeOnClickModal: false,
+					 center: true,
+					 confirmButtonText: '重新登录'
 				}).then(() => {
-					router.replace({path: '/login'});
-				}).catch(() => {})
+						router.replace({path: '/login'});
+						isReloadLogin = false
+					}).catch(() => {})
+			}
 		}else{
-			ElNotification.error({
-				title: '请求发生错误',
-				message: response.data.message
-			})
+				ElNotification.error({
+					title: '请求发生错误',
+					message: response.data.message
+				})
+			
 
 		}
 		return response;

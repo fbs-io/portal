@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-24 07:23:31
+ * @LastEditTime: 2023-08-29 21:23:56
  * @Description: 请填写简介
  */
 package auth
@@ -59,6 +59,7 @@ func New(route core.RouterGroup) {
 	{
 
 		auth.POST("login", "登陆", loginParams{}, login()).WithAllowSignature()
+		auth.POST("add", "添加用户", userAddParams{}, userAdd())
 		auth.PUT("chpwd", "变更密码", userChPwdParams{}, chpwd())
 		auth.PUT("update", "更新账户", userUpdateParams{}, userUpdate()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 	}
@@ -66,10 +67,12 @@ func New(route core.RouterGroup) {
 	// 用户列表管理, 用于批量管理用户
 	userList := route.Group("users", "用户管理")
 	{
+		// 获取用户列表
 		userList.GET("list", "用户列表", userListQueryParams{}, userListQuery())
-		userList.POST("add", "用户列表", nil, nil)
-		userList.PUT("edit", "用户列表", nil, nil)
-		userList.DELETE("delete", "用户列表", nil, nil)
+		// 批量更新用户
+		userList.PUT("edit", "更新用户", userListUpdateParams{}, usersUpdate())
+		// 批量更新, 也适用于单个用户
+		userList.DELETE("delete", "删除用户", userDelParams{}, usersDel())
 	}
 
 }

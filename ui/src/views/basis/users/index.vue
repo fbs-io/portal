@@ -16,7 +16,7 @@
 						<el-button type="primary" icon="el-icon-plus" @click="add"></el-button>
 						<el-button type="danger" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
 						<el-button type="primary" plain :disabled="selection.length==0">分配角色</el-button>
-						<el-button type="primary" plain :disabled="selection.length==0">密码重置</el-button>
+						<el-button type="primary" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
 					<div class="right-panel">
 						<div class="right-panel-search">
@@ -28,15 +28,21 @@
 				<el-main class="nopadding">
 					<scTable ref="table" :apiObj="apiObj" @selection-change="selectionChange" stripe remoteSort remoteFilter>
 						<el-table-column type="selection" width="50"></el-table-column>
-						<el-table-column label="ID" prop="ID" column-key="ID" width="80" sortable='custom'></el-table-column>
+						<el-table-column label="ID" prop="id" column-key="id" width="80" sortable='custom'></el-table-column>
 						<!-- <el-table-column label="头像" width="80" column-key="Av" :filters="[{text: '已上传', value: '1'}, {text: '未上传', value: '0'}]">
 							<template #default="scope">
 								<el-avatar :src="scope.row.avatar" size="small"></el-avatar>
 							</template>
 						</el-table-column> -->
+						
 						<el-table-column label="登录账号" prop="account" width="150" sortable='custom' column-key="Account" :filters="[{text: '系统账号', value: '1'}, {text: '普通账号', value: '0'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="150" sortable='custom'></el-table-column>
 						<el-table-column label="所属角色" prop="role" width="200" sortable='custom'></el-table-column>
+						<el-table-column label="状态" prop="status" width="200" sortable='custom'>
+							<template #default="scope">
+								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
+							</template>
+						</el-table-column>
 						<el-table-column label="加入时间" prop="create_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
 						<el-table-column label="操作" fixed="right" align="right" width="160">
 							<template #default="scope">
@@ -62,7 +68,8 @@
 </template>
 
 <script>
-	import saveDialog from './save'
+	import { ref } from 'vue';
+import saveDialog from './save'
 
 	export default {
 		name: 'user',
@@ -77,7 +84,7 @@
 				showGrouploading: false,
 				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.user.users.get,
+				apiObj: this.$API.user.users.list,
 				selection: [],
 				search: {
 					nick_name: null
@@ -109,40 +116,66 @@
 			},
 			//查看
 			table_show(row){
+				console.log(row)
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)
 				})
 			},
+			select_id(){
+				var reqData = []
+				// const loading = this.$loading();
+				// var reqData =[]
+				this.selection.forEach(item => {
+					// this.$refs.table.tableData.forEach((itemI, indexI) => {
+					// 	if (item.id === itemI.id) {
+					// 		this.$refs.table.tableData.splice(indexI, 1)
+					// 	}
+					// })
+					reqData.unshift(item.id)
+				})
+				
+				// data = Object.assign(data,{id:reqData})
+				// callback(data)
+				// this.$refs.table.reload()
+				// loading.close();
+				return reqData
+			},	
 			//删除
 			async table_del(row, index){
-				var reqData = {id: row.id}
-				var res = await this.$API.demo.post.post(reqData);
-				if(res.code == 200){
-					//这里选择刷新整个表格 OR 插入/编辑现有表格数据
-					this.$refs.table.tableData.splice(index, 1);
-					this.$message.success("删除成功")
-				}else{
-					this.$alert(res.message, "提示", {type: 'error'})
-				}
+				var reqData = {id: [row.id]}
+				await this.$API.user.users.delete(reqData);
+				this.$refs.table.tableData.splice(index, 1)
+				this.$refs.table.reload()
 			},
 			//批量删除
 			async batch_del(){
+				var reqData = []
 				this.$confirm(`确定删除选中的 ${this.selection.length} 项吗？`, '提示', {
 					type: 'warning'
 				}).then(() => {
-					const loading = this.$loading();
 					this.selection.forEach(item => {
 						this.$refs.table.tableData.forEach((itemI, indexI) => {
 							if (item.id === itemI.id) {
 								this.$refs.table.tableData.splice(indexI, 1)
 							}
 						})
+						reqData.unshift(item.id)
 					})
+					const loading = this.$loading();
+					this.$API.user.users.delete({id: reqData})
 					loading.close();
-					this.$message.success("操作成功")
+					this.$refs.table.reload()
 				}).catch(() => {
-
+				})
+			},
+			// 批量重置密码
+			async batch_reset_pwd(){
+				this.$confirm(`确定删除选中的 ${this.selection.length} 项重置为密码: abc@123 吗？`, '提示', {
+					type: 'warning'
+				}).then(() => {
+				 	this.$API.user.users.updates({password:"abc@123",id:this.select_id()})
+				}).catch(() => {
 				})
 			},
 			//表格选择后回调事件
@@ -152,7 +185,7 @@
 			//加载树数据
 			async getGroup(){
 				this.showGrouploading = true;
-				var res = await this.$API.user.users.get();
+				var res = await this.$API.user.users.list();
 				this.showGrouploading = false;
 				var allNode ={id: '', label: '所有'}
 				// res.data.unshift(allNode);
@@ -177,6 +210,7 @@
 			//本地更新数据
 			handleSuccess(data, mode){
 				if(mode=='add'){
+					console.log(data)
 					data.id = new Date().getTime()
 					this.$refs.table.tableData.unshift(data)
 				}else if(mode=='edit'){
@@ -195,6 +229,17 @@
 				var m = date.getMinutes() + ':'
 				var s = date.getSeconds()
 				return Y+M+D+h+m+s
+			},
+			//表格内开关
+			changeSwitch(val, row){
+				row.status = row.status == 1 ? 1 : -1
+				row.$switch_status = true;
+				setTimeout(()=>{
+					delete row.$switch_status;
+					var res = this.$API.user.updateUser.put({id:row.id,status:row.status});
+					// row.status = val;
+					// this.$message.success("操作成功")
+				}, 500)
 			},
 		}
 	}

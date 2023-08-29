@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-21 23:16:35
+ * @LastEditTime: 2023-08-26 22:06:52
  * @Description: 请填写简介
 -->
 <template>
@@ -42,9 +42,7 @@
 			this.account = this.$TOOL.data.get("USER_INFO");
 		},
 		methods:{
-			async updateAccount(){
-				console.log(1)
-			
+			async updateAccount(){			
 				// 校验参数
 				var validate = await this.$refs.account.validate().catch(()=>{})
 				if(!validate){ return false }

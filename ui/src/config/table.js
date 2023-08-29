@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-25 06:10:54
+ * @LastEditTime: 2023-08-30 06:23:41
  * @Description: 请填写简介
  */
 //数据表格配置
@@ -27,8 +27,8 @@ export default {
 	request: {							//请求规定字段
 		page: 'page_num',					//规定当前分页字段
 		pageSize: 'page_size',			//规定一页条数字段
-		prop: 'prop',					//规定排序字段名字段
-		order: 'orders'					//规定排序规格字段
+		prop: 'orders',					//规定排序字段名字段
+		// order: 'sortby'					//规定排序规格字段
 	},
 	/**
 	 * 自定义列保存处理

@@ -4,7 +4,7 @@
  * @Author: sakuya
  * @Date: 2021年11月29日21:51:15
  * @LastEditors: reel
- * @LastEditTime: 2023-08-25 06:16:43
+ * @LastEditTime: 2023-08-30 06:40:58
 -->
 
 <template>
@@ -112,7 +112,7 @@
 			_table_height() {
 				return this.hidePagination && this.hideDo ? "100%" : "calc(100% - 50px)"
 			}
-		},
+		},		
 		data() {
 			return {
 				scPageSize: this.pageSize,
@@ -169,11 +169,15 @@
 			//获取数据
 			async getData(){
 				this.loading = true;
+				let order = this.prop
+				if (this.order == 'descending'){
+					order = order + " desc"
+				}
 				var reqData = {
 					[config.request.page]: this.currentPage,
 					[config.request.pageSize]: this.scPageSize,
-					[config.request.prop]: this.prop,
-					[config.request.order]: this.order
+					[config.request.prop]: order,
+					// [config.request.order]: this.order
 				}
 				if(this.hidePagination){
 					delete reqData[config.request.page]
@@ -194,7 +198,6 @@
 					this.emptyText = "数据格式错误";
 					return false;
 				}
-				console.log(response)
 				if(response.code != config.successCode){
 					this.loading = false;
 					this.emptyText = response.msg;
@@ -205,7 +208,6 @@
 					}else{
 						this.tableData = response.rows || [];
 					}
-					console.log(this.tableData)
 					this.total = response.total || 0;
 					// this.summary = response.summary || {};
 					this.loading = false;
@@ -214,7 +216,7 @@
 				this.$emit('dataChange', res, this.tableData)
 			},
 			//分页点击
-			paginationChange(){
+			paginationChange(num){
 				this.getData();
 			},
 			//条数变化
@@ -234,7 +236,7 @@
 				Object.assign(this.tableParams, params || {})
 				this.getData()
 			},
-			//重载数据 替换params
+			// 重载数据 替换params
 			reload(params, page=1){
 				this.currentPage = page;
 				this.tableParams = params || {}

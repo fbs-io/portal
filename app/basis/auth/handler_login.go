@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-08-26 20:53:50
+ * @LastEditTime: 2023-08-29 22:29:50
  * @Description: 请填写简介
  */
 package auth
@@ -26,13 +26,12 @@ func login() core.HandlerFunc {
 		p := ctx.CtxGetParams().(*loginParams)
 		tx := ctx.TX()
 		user := &User{}
-		err := tx.Find(user).Error
+		err := tx.Where("status > 0 ").Find(user).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
 			return
 		}
 		err = user.CheckPwd(p.Password)
-
 		if err != nil {
 			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
 			return

@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-21 06:01:52
  * @LastEditors: reel
- * @LastEditTime: 2023-08-25 06:08:14
+ * @LastEditTime: 2023-08-29 21:31:21
  * @Description: 用户相关api, 如更新账户信息, 修改密码等
  */
 import config from "@/config"
@@ -27,17 +27,25 @@ export default {
 		url: `${config.API_URL}/basis/users`,
 		name: "用户列表操作",
 		// 查询
-		get: async function(data={}){
+		list: async function(data={}){
 			return await http.get(`${config.API_URL}/basis/users/list`, data);
 		},
 		// 新增
-		post: async function(data={}){
-			return await http.post(this.url, data);
+		add: async function(data={}){
+			return await http.post(`${config.API_URL}/basis/user/add`, data);
 		},
 		// 更新
-		put: async function(data={}){
-			return await http.post(this.url, data);
+		edit: async function(data={}){
+			return await http.put(`${config.API_URL}/basis/users/edit`, data);
 		},
+		// 删除
+		delete: async function(data={}){
+			return await http.delete(`${config.API_URL}/basis/users/delete`, data);
+		},
+		updates: async function(data={}){
+			return await http.put(`${config.API_URL}/basis/users/edit`, data);
+		},
+		
 
 	}
 }
