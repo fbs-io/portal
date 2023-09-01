@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-04 15:27:47
  * @LastEditors: reel
- * @LastEditTime: 2023-08-22 07:04:18
+ * @LastEditTime: 2023-08-31 06:42:01
  * @Description: 登陆组件
 -->
 <template>
@@ -57,7 +57,7 @@
 					password: this.form.password
 				}
 				//获取token
-				var res = await this.$API.auth.token.post(data)
+				var res = await this.$API.basis_auth.token.post(data)
 				if(res.errno == 0){
 					this.$TOOL.cookie.set("TOKEN", res.details.token, {
 						expires: this.form.autologin? 30*60 : 0

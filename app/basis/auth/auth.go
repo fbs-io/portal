@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-29 21:23:56
+ * @LastEditTime: 2023-09-01 05:53:12
  * @Description: 请填写简介
  */
 package auth
@@ -65,14 +65,31 @@ func New(route core.RouterGroup) {
 	}
 
 	// 用户列表管理, 用于批量管理用户
-	userList := route.Group("users", "用户管理")
+	users := route.Group("users", "用户管理")
 	{
 		// 获取用户列表
-		userList.GET("list", "用户列表", userListQueryParams{}, userListQuery())
+		users.GET("list", "用户列表", usersQueryParams{}, usersQuery())
 		// 批量更新用户
-		userList.PUT("edit", "更新用户", userListUpdateParams{}, usersUpdate())
+		users.PUT("edit", "更新用户", usersUpdateParams{}, usersUpdate())
 		// 批量更新, 也适用于单个用户
-		userList.DELETE("delete", "删除用户", userDelParams{}, usersDel())
+		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
+	}
+
+	// role := route.Group("role", "单角色管理").WithPermission(core.SOURCE_TYPE_LIMITED)
+
+	// {
+	// 	role.PUT("add", "添加角色", roleAddParams{}, roleAdd())
+	// }
+
+	roles := route.Group("roles", "角色管理")
+	{
+		// 单行添加
+		roles.PUT("add", "添加角色", roleAddParams{}, roleAdd())
+
+		// 批量操作
+		roles.GET("list", "角色列表", rolesQueryParams{}, rolesQuery())
+		roles.POST("edit", "编辑角色", rolesUpdateParams{}, rolesUpdate())
+		roles.DELETE("delete", "删除角色", rolesDeleteParams{}, rolesDelete())
 	}
 
 }

@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-08-29 22:24:16
+ * @LastEditTime: 2023-09-01 06:14:47
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -29,24 +29,22 @@ type User struct {
 }
 
 type UserList struct {
-	ID       uint             `json:"id"`
-	Account  string           `json:"account"`
-	NickName string           `json:"nick_name"`
-	Email    string           `json:"email"`
-	IP       string           `json:"ip"`
-	CreateAt uint64           `json:"create_at"`
-	Status   int8             `json:"status"`
-	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)"`
-}
-
-func (ul *UserList) AfterFind(tx *gorm.DB) (err error) {
-
-	return
+	ID        uint             `json:"id"`
+	Account   string           `json:"account"`
+	NickName  string           `json:"nick_name"`
+	Email     string           `json:"email"`
+	IP        string           `json:"ip"`
+	Super     string           `json:"super"`
+	CreatedAt uint64           `json:"created_at"`
+	Status    int8             `json:"status"`
+	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)"`
 }
 
 func (u *User) TableName() string {
 	return "e_auth_user"
 }
+
+// gorm中间件操作
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	u.UUID = uuid.New().String()
@@ -66,10 +64,14 @@ func (u *User) BeforeDelete(tx *gorm.DB) error {
 	return nil
 }
 
+// User模型相关操作
+
+// 校验密码是否正确
 func (u *User) CheckPwd(pwd string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pwd))
 }
 
+// 加密密码
 func (u *User) encodePwd() error {
 	if u.Password != "" {
 		pb, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
@@ -89,5 +91,26 @@ func (u *User) UserInfo() map[string]interface{} {
 		"nick_name": u.NickName,
 		"account":   u.Account,
 		"email":     u.Email,
+		"super":     u.Super,
 	}
+}
+
+// 修改密码
+func (user *User) chpwd(param *userChPwdParams) (err error) {
+	err = user.CheckPwd(param.OldPwd)
+	if err != nil {
+		return
+	}
+	user.Password = param.NewPwd
+	return
+}
+
+// 用户更新
+func (user *User) update(tx *gorm.DB, param *userUpdateParams) (err error) {
+	user.NickName = param.NickName
+	user.Email = param.Email
+	user.Role = param.Role
+	user.ID = param.ID
+	user.Status = param.Status
+	return tx.Updates(user).Error
 }

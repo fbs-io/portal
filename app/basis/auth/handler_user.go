@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-08-29 22:28:26
+ * @LastEditTime: 2023-09-01 06:13:02
  * @Description: 用户信息相关接口
  */
 package auth
@@ -110,16 +110,17 @@ func chpwd() core.HandlerFunc {
 }
 
 // orders, page_num, page_size 作为保留字段用于条件生成
-type userListQueryParams struct {
+type usersQueryParams struct {
 	PageNum  int    `form:"page_num"`
 	PageSize int    `form:"page_size"`
 	Orders   string `form:"orders"`
+	Super    string `form:"super"`
 	Name     string `form:"nick_name" conditions:"like"`
 }
 
-func userListQuery() core.HandlerFunc {
+func usersQuery() core.HandlerFunc {
 	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userListQueryParams)
+		param := ctx.CtxGetParams().(*usersQueryParams)
 		um := &User{}
 		tx := ctx.TX(
 			core.SetTxMode(core.TX_QRY_MODE_SUBID),
@@ -144,7 +145,7 @@ func userListQuery() core.HandlerFunc {
 	}
 }
 
-type userListUpdateParams struct {
+type usersUpdateParams struct {
 	ID     []uint           `json:"id"  binding:"required" conditions:"-"`
 	Pwd    string           `json:"password" conditions:"-"`
 	Super  string           `json:"super" conditions:"-"`
@@ -154,7 +155,7 @@ type userListUpdateParams struct {
 
 func usersUpdate() core.HandlerFunc {
 	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userListUpdateParams)
+		param := ctx.CtxGetParams().(*usersUpdateParams)
 		tx := ctx.TX()
 		user := &User{
 			Role:     param.Role,
@@ -162,10 +163,6 @@ func usersUpdate() core.HandlerFunc {
 			Password: param.Pwd,
 		}
 		user.Status = param.Status
-
-		// if param.Pwd!=""{
-		// 	user.Password =
-		// }
 
 		err := tx.Model(user).Where("id in (?)", param.ID).Updates(user).Error
 		if err != nil {
@@ -176,18 +173,18 @@ func usersUpdate() core.HandlerFunc {
 	}
 }
 
-type userDelParams struct {
+type usersDeleteParams struct {
 	ID []uint `json:"id" conditions:"-"`
 }
 
 // 软删除
-func usersDel() core.HandlerFunc {
+func usersDelete() core.HandlerFunc {
 	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userDelParams)
+		param := ctx.CtxGetParams().(*usersDeleteParams)
 		tx := ctx.TX()
 
 		user := &User{}
-		user.DeleteBy = ctx.Auth()
+		user.DeletedBy = ctx.Auth()
 		user.DeletedAT = uint(time.Now().Unix())
 
 		err := tx.Model(user).Where("id in (?)", param.ID).Updates(user).Error

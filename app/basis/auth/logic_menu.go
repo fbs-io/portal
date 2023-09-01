@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-08-20 23:46:50
+ * @LastEditTime: 2023-08-30 07:33:17
  * @Description: 临时生成菜单用
  */
 package auth
@@ -27,7 +27,7 @@ func getMenuTree(c core.Core, u *User) (tree []*menuTree, err error) {
 	// 构筑条件
 	cond := rdb.NewCondition()
 	cond.PageSize = 1000
-	cond.Orders = []string{"level", "id"}
+	cond.Orders = "level, id"
 	cond.TableName = source.TableName()
 	cond.Where = map[string]interface{}{
 		"is_router = ? ": core.SOURCE_ROUTER_IS,

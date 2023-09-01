@@ -35,15 +35,16 @@
 							</template>
 						</el-table-column> -->
 						
-						<el-table-column label="登录账号" prop="account" width="150" sortable='custom' column-key="Account" :filters="[{text: '系统账号', value: '1'}, {text: '普通账号', value: '0'}]"></el-table-column>
+						<el-table-column label="登录账号" prop="account" width="150" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="150" sortable='custom'></el-table-column>
+						<el-table-column label="邮箱" prop="email" width="150" sortable='custom'></el-table-column>
 						<el-table-column label="所属角色" prop="role" width="200" sortable='custom'></el-table-column>
 						<el-table-column label="状态" prop="status" width="200" sortable='custom'>
 							<template #default="scope">
 								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
 							</template>
 						</el-table-column>
-						<el-table-column label="加入时间" prop="create_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
+						<el-table-column label="加入时间" prop="created_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
 						<el-table-column label="操作" fixed="right" align="right" width="160">
 							<template #default="scope">
 								<el-button-group>
@@ -84,7 +85,7 @@ import saveDialog from './save'
 				showGrouploading: false,
 				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.user.users.list,
+				apiObj: this.$API.basis_auth.users.list,
 				selection: [],
 				search: {
 					nick_name: null
@@ -124,27 +125,15 @@ import saveDialog from './save'
 			},
 			select_id(){
 				var reqData = []
-				// const loading = this.$loading();
-				// var reqData =[]
 				this.selection.forEach(item => {
-					// this.$refs.table.tableData.forEach((itemI, indexI) => {
-					// 	if (item.id === itemI.id) {
-					// 		this.$refs.table.tableData.splice(indexI, 1)
-					// 	}
-					// })
 					reqData.unshift(item.id)
 				})
-				
-				// data = Object.assign(data,{id:reqData})
-				// callback(data)
-				// this.$refs.table.reload()
-				// loading.close();
 				return reqData
 			},	
 			//删除
 			async table_del(row, index){
 				var reqData = {id: [row.id]}
-				await this.$API.user.users.delete(reqData);
+				await this.$API.basis_auth.users.delete(reqData);
 				this.$refs.table.tableData.splice(index, 1)
 				this.$refs.table.reload()
 			},
@@ -163,7 +152,7 @@ import saveDialog from './save'
 						reqData.unshift(item.id)
 					})
 					const loading = this.$loading();
-					this.$API.user.users.delete({id: reqData})
+					this.$API.basis_auth.users.delete({id: reqData})
 					loading.close();
 					this.$refs.table.reload()
 				}).catch(() => {
@@ -174,7 +163,7 @@ import saveDialog from './save'
 				this.$confirm(`确定删除选中的 ${this.selection.length} 项重置为密码: abc@123 吗？`, '提示', {
 					type: 'warning'
 				}).then(() => {
-				 	this.$API.user.users.updates({password:"abc@123",id:this.select_id()})
+				 	this.$API.basis_auth.users.updates({password:"abc@123",id:this.select_id()})
 				}).catch(() => {
 				})
 			},
@@ -185,7 +174,7 @@ import saveDialog from './save'
 			//加载树数据
 			async getGroup(){
 				this.showGrouploading = true;
-				var res = await this.$API.user.users.list();
+				var res = await this.$API.basis_auth.users.list();
 				this.showGrouploading = false;
 				var allNode ={id: '', label: '所有'}
 				// res.data.unshift(allNode);
@@ -221,7 +210,7 @@ import saveDialog from './save'
 			},
 			// 时间序列化
 			timestampToTime (row, column) {
-				var date = new Date(row.create_at) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
+				var date = new Date(row[column.property]) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
 				var Y = date.getFullYear() + '-'
 				var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-'
 				var D = date.getDate() + ' '
@@ -236,10 +225,8 @@ import saveDialog from './save'
 				row.$switch_status = true;
 				setTimeout(()=>{
 					delete row.$switch_status;
-					var res = this.$API.user.updateUser.put({id:row.id,status:row.status});
-					// row.status = val;
-					// this.$message.success("操作成功")
-				}, 500)
+					var res = this.$API.basis_auth.user.update.put({id:row.id,status:row.status});
+				}, 1000)
 			},
 		}
 	}
