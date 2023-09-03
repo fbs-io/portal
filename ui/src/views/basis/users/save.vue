@@ -39,17 +39,17 @@
 			</el-form-item>
 			<!-- <el-form-item label="所属部门" prop="dept">
 				<el-cascader v-model="form.dept" :options="depts" :props="deptsProps" clearable style="width: 100%;"></el-cascader>
-			</el-form-item>
+			</el-form-item> -->
 			<el-form-item label="所属角色" prop="role">
 				<el-select v-model="form.role" multiple filterable style="width: 100%">
 					<el-option v-for="item in roles" :key="item.id" :label="item.label" :value="item.id"/>
 				</el-select>
-			</el-form-item> -->
+			</el-form-item>
 		</el-form>
 		<template #footer>
 			<el-button @click="visible=false" >取 消</el-button>
 			<el-button v-if="mode!='show'" type="primary" :loading="isSaveing" @click="submit(false)">保 存</el-button>
-			<el-button v-if="mode!='show'&&mode=='add'" type="primary" :loading="isSaveing" @click="submit(true)">保存并继续</el-button>
+			<el-button v-if="mode=='add'" type="primary" :loading="isSaveing" @click="submit(true)">保存并继续</el-button>
 		</template>
 	</el-dialog>
 </template>
@@ -117,8 +117,8 @@
 					]
 				},
 				//所需数据选项
-				groups: [],
-				groupsProps: {
+				roles: [],
+				rolesProps: {
 					value: "id",
 					multiple: true,
 					checkStrictly: true
@@ -151,7 +151,7 @@
 			}
 		},
 		mounted() {
-			// this.getGroup()
+			this.getRoles()
 			// this.getDept()
 		},
 		methods: {
@@ -162,9 +162,9 @@
 				return this
 			},
 			//加载树数据
-			async getGroup(){
-				var res = await this.$API.basis_auth.role.list();
-				this.groups = res.data.rows;
+			async getRoles(){
+				var res = await this.$API.basis_auth.roles.list();
+				this.roles = res.details.rows;
 			},
 			async getDept(){
 				// var res = await this.$API.system.dept.list.get();
@@ -203,6 +203,7 @@
 								this.visible = false;
 							}
 						}
+						this.$emit("success",this.form,this.mode)
 					}else{
 						return false;
 					}
@@ -210,17 +211,8 @@
 			},
 			//表单注入数据
 			setData(data){
-				console.log(data.account)
-				this.form.id = data.id
-				this.form.account = data.account
-				this.form.avatar = data.avatar
-				this.form.nick_name = data.nick_name
-				this.form.role = data.role
-				this.form.dept = data.dept
-				this.form.super = data.super
-
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
-				//Object.assign(this.form, data)
+				Object.assign(this.form, data)
 			}
 		}
 	}

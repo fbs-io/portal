@@ -68,9 +68,9 @@
 			//加载树数据
 			async getMenu(){
 				this.menuloading = true
-				var res = await this.$API.system.menu.list.get();
+				var res = await this.$API.basis_auth.menus.list();
 				this.menuloading = false
-				this.menuList = res.data;
+				this.menuList = res.details;
 			},
 			//树点击
 			menuClick(data, node){

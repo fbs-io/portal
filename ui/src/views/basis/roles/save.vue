@@ -1,25 +1,3 @@
-<!-- <template>
-	<el-dialog :title="titleMap[mode]" v-model="visible" :width="500" destroy-on-close @closed="$emit('closed')">
-		<el-form :model="form" :rules="rules" :disabled="mode=='show'" ref="dialogForm" label-width="100px" label-position="left">
-			<el-form-item label="角色名称" prop="label">
-				<el-input v-model="form.label" clearable></el-input>
-			</el-form-item>
-			<el-form-item label="角色描述" prop="description">
-				<el-input v-model="form.description" clearable></el-input>
-			</el-form-item>
-			<el-form-item label="排序" prop="sort">
-				<el-input-number v-model="form.sort" controls-position="right" :min="1" style="width: 100%;"></el-input-number>
-			</el-form-item>
-			<el-form-item v-if="mode=='edit'" label="是否有效" prop="status">
-				<el-switch v-model="form.status" :active-value="1" :inactive-value="0"></el-switch>
-			</el-form-item>
-		</el-form>
-		<template #footer>
-			<el-button @click="visible=false" >取 消</el-button>
-			<el-button v-if="mode!='show'" type="primary" :loading="isSaveing" @click="submit()">保 存</el-button>
-		</template>
-	</el-dialog>
-</template> -->
 <template>
 	<el-dialog :title="titleMap[mode]" v-model="visible" :width="700" destroy-on-close @closed="$emit('closed')">
 		<el-tabs tab-position="top">
@@ -41,7 +19,7 @@
 			</el-tab-pane>
 			<el-tab-pane label="菜单权限">
 				<div class="treeMain">
-					<el-tree ref="menu" node-key="name" :data="menu.list" :props="menu.props" show-checkbox></el-tree>
+					<el-tree ref="menu" node-key="code" :data="menu.list" :props="menu.props" show-checkbox></el-tree>
 				</div>
 			</el-tab-pane>
 			<!-- TODO:完善数据权限, 首页画面, 首页组件 -->
@@ -83,7 +61,8 @@
 		</el-tabs>
 		<template #footer>
 			<el-button @click="visible=false" >取 消</el-button>
-			<el-button type="primary" :loading="isSaveing" @click="submit()">保 存</el-button>
+			<el-button type="primary" :loading="isSaveing" @click="submit(false)">保 存</el-button>
+			<el-button v-if="mode=='add'" type="primary" :loading="isSaveing" @click="submit(true)">保存并继续</el-button>
 		</template>
 	</el-dialog>
 </template>
@@ -108,6 +87,7 @@
 					description: "",
 					sort: 1,
 					status: 1,
+					sources:[]
 				},
 				menu: {
 					list: [],
@@ -120,9 +100,9 @@
 				},
 				//验证规则
 				rules: {
-					sort: [
-						{required: true, message: '请输入排序', trigger: 'change'}
-					],
+					// sort: [
+					// 	{required: true, message: '请输入排序', trigger: 'change'}
+					// ],
 					label: [
 						{required: true, message: '请输入角色名称'}
 					],
@@ -133,7 +113,7 @@
 			}
 		},
 		mounted() {
-
+			this.getMenu()
 		},
 		methods: {
 			//显示
@@ -142,40 +122,13 @@
 				this.visible = true;
 				return this
 			},
-			// //表单提交方法
-			// submit(){
-			// 	this.$refs.dialogForm.validate(async (valid) => {
-			// 		if (valid) {
-			// 			this.isSaveing = true;
-			// 			var res = await this.$API.basis_auth.roles.post(this.form);
-			// 			this.isSaveing = false;
-			// 			if(res.code == 200){
-			// 				this.$emit('success', this.form, this.mode)
-			// 				this.visible = false;
-			// 				this.$message.success("操作成功")
-			// 			}else{
-			// 				this.$alert(res.message, "提示", {type: 'error'})
-			// 			}
-			// 		}
-			// 	})
-			// },
-			// //表单注入数据
-			// setData(data){
-			// 	this.form.id = data.id
-			// 	this.form.label = data.label
-			// 	this.form.alias = data.alias
-			// 	this.form.sort = data.sort
-			// 	this.form.status = data.status
-			// 	this.form.remark = data.remark
 
-			// 	//可以和上面一样单个注入，也可以像下面一样直接合并进去
-			// 	//Object.assign(this.form, data)
-			// }
-						//表单提交方法
+			//表单提交方法
 			submit(isNext){
 				this.$refs.dialogForm.validate(async (valid) => {
 					if (valid) {
 						this.isSaveing = true;
+						this.form.sources = this.$refs.menu.getCheckedKeys().concat(this.$refs.menu.getHalfCheckedKeys())
 						if (this.mode=="add"){
 							var res = await this.$API.basis_auth.roles.add(this.form);
 							this.isSaveing = false;
@@ -185,23 +138,23 @@
 										id:"",
 										label: "",
 										description: "",
-										sort: "",
+										sort: 1,
 										status: "",
-										role: [],
-										// super:"N"
+										sources: [],
 									}
 								}else{
 									this.visible = false;
 								}
 							}
 						}else if (this.mode=="edit") {
+							
 							var data = {
 								id:[this.form.id],
 								label: this.form.label,
 								description: this.form.description,
 								sort: this.form.sort,
 								status: this.form.status,
-								role: this.form.role,
+								sources: this.form.sources,
 							}
 							var res = await this.$API.basis_auth.roles.edit(data);
 							this.isSaveing = false;
@@ -209,26 +162,30 @@
 								this.visible = false;
 							}
 						}
+						this.$emit('success',this.form, this.mode)
 					}else{
 						return false;
 					}
 				})
-				this.$refs.table.reload();
 			},
 			//表单注入数据
 			setData(data){
-				console.log(data.account)
-				this.form.id = data.id
-				this.form.label = data.label
-				this.form.description = data.description
-				this.form.sort = data.sort
-				this.form.status = data.status
-				this.form.role = data.role
-				// this.form.super = data.super
-
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
-				//Object.assign(this.form, data)
-			}
+				Object.assign(this.form, data)
+			},
+			// 菜单列表
+			async getMenu(){
+				var res = await this.$API.basis_auth.menus.list()
+				this.menu.list = res.details
+
+				// //获取接口返回的之前选中的和半选的合并，处理过滤掉有叶子节点的key
+				this.menu.checked = this.form.sources
+				this.$nextTick(() => {
+					let filterKeys = this.menu.checked.filter(key => this.$refs.menu.getNode(key).isLeaf)
+					this.$refs.menu.setCheckedKeys(filterKeys, true)
+				})
+			},
+
 		}
 	}
 </script>

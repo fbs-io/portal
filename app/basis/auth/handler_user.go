@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:13:02
+ * @LastEditTime: 2023-09-04 06:46:22
  * @Description: 用户信息相关接口
  */
 package auth
@@ -36,6 +36,7 @@ func userAdd() core.HandlerFunc {
 			NickName: param.NickName,
 			Email:    param.Email,
 			Super:    param.Super,
+			Role:     param.Role,
 		}
 		err := tx.Create(user).Error
 		if err != nil {
@@ -64,12 +65,18 @@ func userUpdate() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*userUpdateParams)
 		tx := ctx.TX()
-		user := GetUser(param.ID, tx)
-		if user == nil {
-			ctx.JSON(errno.ERRNO_RDB_QUERY)
-			return
-		}
-		err := user.update(tx, param)
+		// user := GetUser(param.ID, tx)
+		// if user == nil {
+		// 	ctx.JSON(errno.ERRNO_RDB_QUERY)
+		// 	return
+		// }
+		user := &User{}
+		user.NickName = param.NickName
+		user.Email = param.Email
+		user.Role = param.Role
+		user.ID = param.ID
+		user.Status = param.Status
+		err := tx.Updates(user).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
 			return
@@ -133,6 +140,7 @@ func usersQuery() core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
 		}
+
 		var count int64
 		ctx.TX().Model(&User{}).Offset(-1).Limit(-1).Count(&count)
 		data := map[string]interface{}{
@@ -141,6 +149,15 @@ func usersQuery() core.HandlerFunc {
 			"total":     count,
 			"rows":      users,
 		}
+
+		// for _, user := range users {
+		// 	roleList := make([]interface{}, 0, 100)
+		// 	for _, role := range user.Role {
+		// 		r := GetRole(uint(role.(float64)), ctx.Core().RDB().DB())
+		// 		roleList = append(roleList, r.Label)
+		// 	}
+		// 	user.Role = roleList
+		// }
 		ctx.JSON(errno.ERRNO_OK.WrapData(data))
 	}
 }

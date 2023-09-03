@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:02:15
+ * @LastEditTime: 2023-09-04 06:39:05
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -48,11 +48,11 @@ export default {
 		},
 		// 新增
 		add: async function(data={}){
-			return await http.post(`${config.API_URL}/basis/user/add`, data);
+			return await http.put(`${config.API_URL}/basis/users/add`, data);
 		},
 		// 更新
 		edit: async function(data={}){
-			return await http.put(`${config.API_URL}/basis/users/edit`, data);
+			return await http.post(`${config.API_URL}/basis/users/edit`, data);
 		},
 		// 删除
 		delete: async function(data={}){
@@ -88,6 +88,34 @@ export default {
 		// 批量删除
 		delete: async function(data={}){
 			return await http.delete(`${config.API_URL}/basis/roles/delete`, data);
+		},
+	},
+
+	// 角色操作
+	menus:{
+		url: `${config.API_URL}/basis/menus`,
+		name: "菜单列表操作",
+
+		// 单行新增
+		add: async function(data={}){
+			return await http.put(`${config.API_URL}/basis/menus/add`, data);
+		},
+		
+		// 查询列表
+		list: async function(data={}){
+			return await http.get(`${config.API_URL}/basis/menus/list`, data);
+		},
+		
+		// 批量更新, 
+		// 但根据业务, 不允许赋予多个角色相同的权限
+		// 但允许批量停用, 删除等
+		edit: async function(data={}){
+			return await http.post(`${config.API_URL}/basis/menus/edit`, data);
+		},
+
+		// 批量删除
+		delete: async function(data={}){
+			return await http.delete(`${config.API_URL}/basis/menus/delete`, data);
 		},
 	}
 }

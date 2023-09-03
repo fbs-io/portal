@@ -167,7 +167,7 @@
 			//保存
 			async save(){
 				this.loading = true
-				var res = await this.$API.demo.post.post(this.form)
+				var res = await this.$API.basis_auth.menus.edit(this.form)
 				this.loading = false
 				if(res.code == 200){
 					this.$message.success("保存成功")

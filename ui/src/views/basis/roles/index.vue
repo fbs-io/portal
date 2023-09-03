@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 07:24:25
+ * @LastEditTime: 2023-09-03 21:38:13
  * @Description: 请填写简介
 -->
 <template>
@@ -11,7 +11,7 @@
 			<div class="left-panel">
 				<el-button type="primary" icon="el-icon-plus" @click="add"></el-button>
 				<el-button type="danger" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-				<el-button type="primary" plain :disabled="selection.length!=1" @click="permission">权限设置</el-button>
+				<!-- <el-button type="primary" plain :disabled="selection.length!=1" @click="permission">权限设置</el-button> -->
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
@@ -23,7 +23,7 @@
 		<el-main class="nopadding">
 			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>
 				<el-table-column type="selection" width="50"></el-table-column>
-				<el-table-column label="#" type="index" width="50"></el-table-column>
+				<el-table-column label="#" porp="id" type="index" width="50"></el-table-column>
 				<el-table-column label="角色名称" prop="label" width="150"></el-table-column>
 				<el-table-column label="角色描述" prop="description" width="360"></el-table-column>
 				<el-table-column label="排序" prop="sort" width="80"></el-table-column>
@@ -54,16 +54,17 @@
 		</el-main>
 	</el-container>
 
-	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSaveSuccess" @closed="dialog.save=false"></save-dialog>
+	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
+	<!-- <save-dialog v-if="dialog.save" ref="saveDialog" @closed="dialog.save=false"></save-dialog> -->
 
-	<permission-dialog v-if="dialog.permission" ref="permissionDialog" @closed="dialog.permission=false"></permission-dialog>
+	<!-- <permission-dialog v-if="dialog.permission" ref="permissionDialog" @closed="dialog.permission=false"></permission-dialog> -->
 
 </template>
 
 
 <script>
 	import { ref } from 'vue';
-import saveDialog from './save'
+	import saveDialog from './save'
 
 	export default {
 		name: 'user',
@@ -110,7 +111,6 @@ import saveDialog from './save'
 			},
 			//查看
 			table_show(row){
-				console.log(row)
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)
@@ -181,12 +181,11 @@ import saveDialog from './save'
 			upsearch(){
 				this.$refs.table.upData(this.search)
 			},
-			//本地更新数据
+			// //本地更新数据
 			handleSuccess(data, mode){
 				if(mode=='add'){
-					console.log(data)
-					data.id = new Date().getTime()
-					this.$refs.table.tableData.unshift(data)
+					// this.$refs.table.tableData.unshift(data)
+					this.$refs.table.reload()
 				}else if(mode=='edit'){
 					this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
 						Object.assign(item, data)
@@ -206,7 +205,6 @@ import saveDialog from './save'
 			},
 			//表格内开关
 			changeSwitch(val, row){
-				console.log(row)
 				row.status = row.status == 1 ? 1 : -1
 				row.$switch_status = true;
 				setTimeout(()=>{

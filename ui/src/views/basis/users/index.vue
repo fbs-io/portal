@@ -35,11 +35,11 @@
 							</template>
 						</el-table-column> -->
 						
-						<el-table-column label="登录账号" prop="account" width="150" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
-						<el-table-column label="姓名" prop="nick_name" width="150" sortable='custom'></el-table-column>
-						<el-table-column label="邮箱" prop="email" width="150" sortable='custom'></el-table-column>
-						<el-table-column label="所属角色" prop="role" width="200" sortable='custom'></el-table-column>
-						<el-table-column label="状态" prop="status" width="200" sortable='custom'>
+						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
+						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
+						<el-table-column label="邮箱" prop="email" width="130" sortable='custom'></el-table-column>
+						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatRoles"></el-table-column>
+						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
 								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
 							</template>
@@ -89,7 +89,8 @@ import saveDialog from './save'
 				selection: [],
 				search: {
 					nick_name: null
-				}
+				},
+				roles:[],
 			}
 		},
 		watch: {
@@ -99,6 +100,7 @@ import saveDialog from './save'
 		},
 		mounted() {
 			this.getGroup()
+			this.getRoles()
 		},
 		methods: {
 			//添加
@@ -199,13 +201,12 @@ import saveDialog from './save'
 			//本地更新数据
 			handleSuccess(data, mode){
 				if(mode=='add'){
-					console.log(data)
-					data.id = new Date().getTime()
-					this.$refs.table.tableData.unshift(data)
+					this.$refs.table.reload()
 				}else if(mode=='edit'){
 					this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
 						Object.assign(item, data)
 					})
+					this.$refs.table.reload()
 				}
 			},
 			// 时间序列化
@@ -228,6 +229,28 @@ import saveDialog from './save'
 					var res = this.$API.basis_auth.user.update.put({id:row.id,status:row.status});
 				}, 1000)
 			},
+
+			async getRoles(){
+				var res = await this.$API.basis_auth.roles.list();
+				this.roles = res.details.rows;
+			},
+			formatRoles(row,column){
+				var data = []
+				var roles = row[column.property]
+				if (!roles){
+					return 
+				}
+				roles.forEach(item =>{
+					var index = item
+					var role = this.roles.filter(item => item.id == index)[0]
+					if (role){
+						data.unshift(role.label)
+					}
+					
+				})
+				return data.join(", ")
+				
+			}
 		}
 	}
 </script>
