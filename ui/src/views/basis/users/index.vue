@@ -45,7 +45,7 @@
 							</template>
 						</el-table-column>
 						<el-table-column label="加入时间" prop="created_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
-						<el-table-column label="操作" fixed="right" align="right" width="160">
+						<el-table-column label="操作" fixed="right" align="right" width="180">
 							<template #default="scope">
 								<el-button-group>
 									<el-button text type="primary" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>

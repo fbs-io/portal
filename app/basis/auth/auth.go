@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 06:40:31
+ * @LastEditTime: 2023-09-04 22:27:37
  * @Description: 请填写简介
  */
 package auth
@@ -75,12 +75,15 @@ func New(route core.RouterGroup) {
 	// 用户个人信息操作
 	//
 	// 如登陆, 注销, 密码变更, 信息更改等
-	auth := route.Group("user", "账户信息").WithPermission(core.SOURCE_TYPE_UNMENU)
+	info := route.Group("user", "账户信息").WithPermission(core.SOURCE_TYPE_UNMENU).WithHidden()
 	{
 
-		auth.POST("login", "登陆", loginParams{}, login()).WithAllowSignature()
-		auth.PUT("chpwd", "变更密码", userChPwdParams{}, chpwd())
-		auth.PUT("update", "更新账户", userUpdateParams{}, userUpdate()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
+		// 允许鉴权例外
+		info.POST("login", "登陆", loginParams{}, login()).WithAllowSignature()
+		// 个人账户更改密码不受限
+		info.PUT("chpwd", "变更密码", userChPwdParams{}, chpwd()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
+		// 个人用户修改信息不受限
+		info.PUT("update", "更新账户", userUpdateParams{}, userUpdate()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 	}
 
 	// 用户列表管理, 用于批量管理用户
@@ -95,12 +98,6 @@ func New(route core.RouterGroup) {
 		// 批量更新, 也适用于单个用户
 		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
 	}
-
-	// role := route.Group("role", "单角色管理").WithPermission(core.SOURCE_TYPE_LIMITED)
-
-	// {
-	// 	role.PUT("add", "添加角色", roleAddParams{}, roleAdd())
-	// }
 
 	roles := route.Group("roles", "角色管理")
 	{

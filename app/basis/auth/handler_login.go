@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-09-02 10:57:11
+ * @LastEditTime: 2023-09-04 22:07:07
  * @Description: 请填写简介
  */
 package auth
@@ -41,7 +41,7 @@ func login() core.HandlerFunc {
 		ctx.Core().Session().SetWithCsrfToken(ctx.Ctx().Writer, sessionKey, user.Account)
 
 		// 菜单获取
-		menu, _ := getMenuTree(ctx.Core(), user, "info")
+		menu, _ := getMenuTree(ctx.Core(), user.Account, "info")
 
 		// 权限获取及绑定
 		permissionMap, permissionList, _ := getPermission(ctx.Core(), user)

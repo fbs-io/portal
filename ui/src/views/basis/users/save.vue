@@ -42,7 +42,7 @@
 			</el-form-item> -->
 			<el-form-item label="所属角色" prop="role">
 				<el-select v-model="form.role" multiple filterable style="width: 100%">
-					<el-option v-for="item in roles" :key="item.id" :label="item.label" :value="item.id"/>
+					<el-option v-for="item in roles" :key="item.code" :label="item.label" :value="item.code"/>
 				</el-select>
 			</el-form-item>
 		</el-form>
@@ -197,7 +197,16 @@
 								}
 							}
 						}else if (this.mode=="edit") {
-							var res = await this.$API.basis_auth.user.update.put(this.form);
+							var data = {
+								id: [this.form.id],
+								account: this.form.account,
+								avatar: this.form.avatar,
+								nick_name: this.form.nick_name,
+								dept: this.form.dept,
+								role: this.form.role,
+								super: this.form.super,
+							}
+							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;
 							if (res.errno==0){
 								this.visible = false;

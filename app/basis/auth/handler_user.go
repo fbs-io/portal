@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 06:46:22
+ * @LastEditTime: 2023-09-04 22:48:11
  * @Description: 用户信息相关接口
  */
 package auth
@@ -15,6 +15,71 @@ import (
 	"github.com/fbs-io/core/store/rdb"
 )
 
+// 用户操作方法
+// 密码修改参数
+type userChPwdParams struct {
+	OldPwd  string `json:"old_pwd" binding:"required" conditions:"-"`
+	NewPwd  string `json:"new_pwd" binding:"required" conditions:"-"`
+	NewPwd2 string `json:"new_pwd2" binding:"eqfield=NewPwd" conditions:"-"`
+}
+
+func chpwd() core.HandlerFunc {
+	return func(ctx core.Context) {
+		param := ctx.CtxGetParams().(*userChPwdParams)
+		tx := ctx.TX()
+		user := &User{
+			Account: ctx.Auth(),
+		}
+
+		err := tx.Model(user).Where("account = (?)", user.Account).Find(user).Error
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_QUERY)
+			return
+		}
+		err = user.chpwd(param)
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+			return
+		}
+		err = tx.Save(user).Error
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.Notify())
+	}
+}
+
+// 用户个人信息修改
+type userUpdateParams struct {
+	NickName string           `json:"nick_name" conditions:"-"`
+	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
+	Super    string           `json:"super" conditions:"-"`
+	Status   int8             `json:"status" conditions:"-"`
+	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
+}
+
+func userUpdate() core.HandlerFunc {
+	return func(ctx core.Context) {
+		param := ctx.CtxGetParams().(*userUpdateParams)
+		tx := ctx.TX()
+
+		user := &User{}
+		user.NickName = param.NickName
+		user.Email = param.Email
+		user.Role = param.Role
+		user.Account = ctx.Auth()
+		user.Status = param.Status
+		err := tx.Where("account = (?)", ctx.Auth()).Updates(user).Error
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
+	}
+}
+
+// 用户管理操作方法
 // TODO:补充其他用户信息, 如部门等
 // 设计思路: 用户和员工分开, 用户可以绑定员工, 但员工不一定有登陆账户
 type userAddParams struct {
@@ -52,69 +117,34 @@ func userAdd() core.HandlerFunc {
 	}
 }
 
-type userUpdateParams struct {
-	ID       uint             `json:"id"  binding:"required"`
-	NickName string           `json:"nick_name" conditions:"-"`
-	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
-	Super    string           `json:"super" conditions:"-"`
-	Status   int8             `json:"status" conditions:"-"`
-	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
-}
+// type usersUpdateParams struct {
 
-func userUpdate() core.HandlerFunc {
-	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userUpdateParams)
-		tx := ctx.TX()
-		// user := GetUser(param.ID, tx)
-		// if user == nil {
-		// 	ctx.JSON(errno.ERRNO_RDB_QUERY)
-		// 	return
-		// }
-		user := &User{}
-		user.NickName = param.NickName
-		user.Email = param.Email
-		user.Role = param.Role
-		user.ID = param.ID
-		user.Status = param.Status
-		err := tx.Updates(user).Error
-		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
-			return
-		}
-		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
-	}
-}
+// 	NickName string           `json:"nick_name" conditions:"-"`
+// 	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
+// 	Super    string           `json:"super" conditions:"-"`
+// 	Status   int8             `json:"status" conditions:"-"`
+// 	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
+// }
 
-// 密码修改参数
-type userChPwdParams struct {
-	ID      uint   `json:"id"  binding:"required"`
-	OldPwd  string `json:"old_pwd" binding:"required" conditions:"-"`
-	NewPwd  string `json:"new_pwd" binding:"required" conditions:"-"`
-	NewPwd2 string `json:"new_pwd2" binding:"eqfield=NewPwd" conditions:"-"`
-}
+// func userUpdate() core.HandlerFunc {
+// 	return func(ctx core.Context) {
+// 		param := ctx.CtxGetParams().(*userUpdateParams)
+// 		tx := ctx.TX()
 
-func chpwd() core.HandlerFunc {
-	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userChPwdParams)
-		tx := ctx.TX()
-		user := GetUser(param.ID, tx)
-		if user == nil {
-			ctx.JSON(errno.ERRNO_RDB_QUERY.ToMap())
-			return
-		}
-		err := user.chpwd(param)
-		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
-			return
-		}
-		err = tx.Save(user).Error
-		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
-			return
-		}
-		ctx.JSON(errno.ERRNO_OK.Notify())
-	}
-}
+// 		user := &User{}
+// 		user.NickName = param.NickName
+// 		user.Email = param.Email
+// 		user.Role = param.Role
+// 		user.Account = ctx.Auth()
+// 		user.Status = param.Status
+// 		err := tx.Where("account = (?)", ctx.Auth()).Updates(user).Error
+// 		if err != nil {
+// 			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+// 			return
+// 		}
+// 		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
+// 	}
+// }
 
 // orders, page_num, page_size 作为保留字段用于条件生成
 type usersQueryParams struct {
