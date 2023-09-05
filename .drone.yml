@@ -12,7 +12,7 @@ steps:
   # workspace:
   #   path: ui
   commands:
-  - cd ui && npm install pnpm && pnpm install && pnpm run build
+  - cd ui && npm install && npm run build
 
 
 # 编译程序
