@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 22:48:11
+ * @LastEditTime: 2023-09-05 19:00:15
  * @Description: 用户信息相关接口
  */
 package auth
@@ -193,11 +193,13 @@ func usersQuery() core.HandlerFunc {
 }
 
 type usersUpdateParams struct {
-	ID     []uint           `json:"id"  binding:"required" conditions:"-"`
-	Pwd    string           `json:"password" conditions:"-"`
-	Super  string           `json:"super" conditions:"-"`
-	Status int8             `json:"status" conditions:"-"`
-	Role   rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
+	ID       []uint           `json:"id"  binding:"required" conditions:"-"`
+	NickName string           `json:"nick_name" conditions:"-"`
+	Pwd      string           `json:"password" conditions:"-"`
+	Super    string           `json:"super" conditions:"-"`
+	Status   int8             `json:"status" conditions:"-"`
+	Email    string           `json:"email" binding:"omitempty,email"`
+	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
 }
 
 func usersUpdate() core.HandlerFunc {
@@ -208,6 +210,7 @@ func usersUpdate() core.HandlerFunc {
 			Role:     param.Role,
 			Super:    param.Super,
 			Password: param.Pwd,
+			NickName: param.NickName,
 		}
 		user.Status = param.Status
 

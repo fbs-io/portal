@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 22:27:37
+ * @LastEditTime: 2023-09-05 05:41:43
  * @Description: 请填写简介
  */
 package auth
@@ -15,23 +15,23 @@ import (
 )
 
 var (
-	userMap = make(map[uint]*User)
-	roleMap = make(map[uint]*Role)
+	userMap = make(map[string]*User, 100)
+	roleMap = make(map[uint]*Role, 100)
 	lock    = &sync.RWMutex{}
 )
 
-func SetUser(id uint, user *User) {
+func SetUser(auth string, user *User) {
 	lock.Lock()
 	defer lock.Unlock()
-	userMap[id] = user
+	userMap[auth] = user
 }
 
-func GetUser(id uint, tx *gorm.DB) (user *User) {
+func GetUser(auth string, tx *gorm.DB) (user *User) {
 	lock.RLock()
 	defer lock.RUnlock()
-	user = userMap[id]
+	user = userMap[auth]
 	if user == nil {
-		user = &User{}
+		user = &User{Account: auth}
 		err := tx.Model(user).Find(user).Error
 		if err != nil {
 			return nil

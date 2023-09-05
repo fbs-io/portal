@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-08-23 20:39:11
+ * @LastEditTime: 2023-09-05 06:47:01
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -20,7 +20,7 @@ func New(c core.Core) {
 	c.Engine().Use(core.LimiterMiddleware(c))
 	c.Engine().Use(core.CorsMiddleware(c))
 	c.Engine().Use(core.SignatureMiddleware(c, core.SINGULAR_TYPE_CSRF_TOKEN))
-	// c.Engine().Use(permissionMiddleware(c))
+	c.Engine().Use(permissionMiddleware(c))
 	c.Engine().Use(core.LogMiddleware(c))
 	c.Engine().Use(core.ParamsMiddleware(c))
 

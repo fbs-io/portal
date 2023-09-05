@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 22:07:07
+ * @LastEditTime: 2023-09-05 06:50:54
  * @Description: 请填写简介
  */
 package auth
@@ -11,6 +11,7 @@ import (
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/session"
+	"github.com/fbs-io/core/store/rdb"
 )
 
 type loginParams struct {
@@ -25,7 +26,7 @@ func login() core.HandlerFunc {
 
 		p := ctx.CtxGetParams().(*loginParams)
 		tx := ctx.TX()
-		user := &User{}
+		user := &User{Permissions: make(map[string]bool, 1000)}
 		err := tx.Where("status > 0 ").Find(user).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
@@ -41,20 +42,26 @@ func login() core.HandlerFunc {
 		ctx.Core().Session().SetWithCsrfToken(ctx.Ctx().Writer, sessionKey, user.Account)
 
 		// 菜单获取
-		menu, _ := getMenuTree(ctx.Core(), user.Account, "info")
+		menu, permissionList, _ := getMenuTree(ctx.Core(), user.Account, "info")
 
-		// 权限获取及绑定
-		permissionMap, permissionList, _ := getPermission(ctx.Core(), user)
-		user.Permissions = permissionMap
+		if user.Super == "Y" {
+			cond := rdb.NewCondition()
+			cond.Columns = "code"
+			tx = ctx.Core().RDB().BuildQuery(cond)
 
+			tx.Model(&core.Sources{}).Where("type in (1,4,5)").Offset(-1).Limit(-1).Find(&permissionList)
+		}
+
+		for _, permission := range permissionList {
+			user.Permissions[permission] = true
+		}
 		result := map[string]interface{}{
 			"token":       sessionKey,
 			"userInfo":    user.UserInfo(),
 			"menu":        menu,
 			"permissions": permissionList,
 		}
-
-		SetUser(user.ID, user)
+		SetUser(user.Account, user)
 		ctx.JSON(errno.ERRNO_OK.WrapData(result).Notify())
 	}
 }

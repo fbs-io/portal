@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 05:04:46
+ * @LastEditTime: 2023-09-05 05:36:19
  * @Description: 临时生成菜单用
  */
 package auth
@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	QUERY_MENU_MODE_INFO   = "info"   // 用户登录时, 返回的菜单信息, 包含不受限菜单和有权限的菜单
-	QUERY_MENU_MODE_MANAGE = "manage" // 用于菜单管理返回的数据, 包含受限的菜单和资源(api), 不受限的菜单和资源并不需要显示
+	QUERY_MENU_MODE_INFO   = "info"   // 用户登录时, 返回的菜单信息, 包含不受限菜单和资源
+	QUERY_MENU_MODE_MANAGE = "manage" // 用于菜单管理返回的数据, 仅返回受限的菜单和资源(api), 用于权限设置或修改, 不受限的菜单和资源并不需要显示
 )
 
 type menuTree struct {
@@ -37,7 +37,7 @@ type menuTree struct {
 }
 
 // TODO: 增加角色判断
-func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, err error) {
+func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissionList []string, err error) {
 	source := &core.Sources{}
 
 	// 构筑条件
@@ -52,7 +52,7 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, err error
 	if err != nil {
 		return
 	}
-	permissionList := []string{""}
+	permissionList = []string{""}
 	if user.Super != "Y" {
 		// 获取用户关联的角色
 		roles := make([]*Role, 0, 100)
@@ -71,8 +71,6 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, err error
 
 			}
 		}
-
-		// cond.Where["code in (?)"] = permissionList
 	}
 	switch mode {
 

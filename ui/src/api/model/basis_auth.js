@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 06:39:05
+ * @LastEditTime: 2023-09-05 18:57:57
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -59,7 +59,7 @@ export default {
 			return await http.delete(`${config.API_URL}/basis/users/delete`, data);
 		},
 		updates: async function(data={}){
-			return await http.put(`${config.API_URL}/basis/users/edit`, data);
+			return await http.post(`${config.API_URL}/basis/users/edit`, data);
 		},
 	},
 
