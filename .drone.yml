@@ -22,7 +22,7 @@ steps:
     - name: mod # mod 缓存路径
       path: /go/pkg/mod
     - name: cache # 构建的缓存, 下次加快构建
-      path: .cache/go-build
+      path: /go/.cache/go-build
   commands:
   - go env -w GOPROXY=https://goproxy.cn,direct
   - go env -w GOFLAGS=-buildvcs=false
