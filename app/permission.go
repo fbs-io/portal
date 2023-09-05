@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 19:59:43
+ * @LastEditTime: 2023-09-05 23:31:03
  * @Description: 权限校验中间件
  */
 package app
@@ -19,7 +19,11 @@ import (
 
 func permissionMiddleware(c core.Core) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if core.GetAllowResource(ctx) {
+		if core.GetAllowSource(ctx) {
+			ctx.Next()
+			return
+		}
+		if strings.Contains(ctx.Request.RequestURI, core.STATIC_PATH_PREFIX) {
 			ctx.Next()
 			return
 		}

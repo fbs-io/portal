@@ -1,0 +1,70 @@
+kind: pipeline
+name: FBS Portal
+
+cloen:
+  depth: 1
+
+## CI 步骤
+steps:
+
+- name: build_Vue
+  image: node:16.20.1
+  # workspace:
+  #   path: ui
+  commands:
+  - cd ui && npm install pnpm && pnpm install && pnpm run build
+
+
+# 编译程序
+- name: build_Go
+  image: golang:1.21
+  volumes: # docker内目录
+    - name: mod # mod 缓存路径
+      path: /go/pkg/mod
+    - name: cache # 构建的缓存, 下次加快构建
+      path: /root/.cache/go-build
+  commands:
+  - go env -w GOPROXY=https://goproxy.cn,direct
+  - go env -w GOFLAGS=-buildvcs=false
+  - go build -o fbs_portal
+
+- name: dev-push
+  image: appleboy/drone-scp
+  settings:
+    host: 
+      from_secret: dev_host
+    port: 
+      from_secret: dev_ssh_port
+    username:
+      from_secret: fbsportal_dev_user
+    password:
+      from_secret: fbsportal_dev_pwd
+    target: 
+      from_secret: fbsportal_dev_target
+    source: 
+      - ./fbs_portal
+    command_timeout: 2m
+
+- name: dev-start
+  image: appleboy/drone-ssh
+  settings:
+    host: 
+      from_secret: dev_host
+    port: 
+      from_secret: dev_ssh_port
+    username:
+      from_secret: fbsportal_dev_user
+    password:
+      from_secret: fbsportal_dev_pwd
+    command_timeout: 2m
+    script:
+      - bash ./stop.sh
+      - nohup ./fbs_portal -env fat >> out.log 2>&1 &
+
+volumes: # 本地目录
+  - name: mod
+    host:
+      path: /home/data/drone/gomod
+  - name: cache
+    host:
+      path: /home/data/drone/gobuildcache
