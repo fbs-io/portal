@@ -18,11 +18,11 @@ steps:
 # 编译程序
 - name: build_Go
   image: golang:1.21
-  volumes: # docker内目录
-    - name: mod # mod 缓存路径
-      path: /go/pkg/mod
-    - name: cache # 构建的缓存, 下次加快构建
-      path: /go/.cache/go-build
+  # volumes: # docker内目录
+  #   - name: mod # mod 缓存路径
+  #     path: /go/pkg/mod
+  #   - name: cache # 构建的缓存, 下次加快构建
+  #     path: /go/.cache/go-build
   commands:
   - go env -w GOPROXY=https://goproxy.cn,direct
   - go env -w GOFLAGS=-buildvcs=false
