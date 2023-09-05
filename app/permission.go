@@ -2,14 +2,14 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 23:31:03
+ * @LastEditTime: 2023-09-06 07:32:07
  * @Description: 权限校验中间件
  */
 package app
 
 import (
-	"fbs-portal/app/basis/auth"
 	"fmt"
+	"portal/app/basis/auth"
 	"strings"
 
 	"github.com/fbs-io/core"

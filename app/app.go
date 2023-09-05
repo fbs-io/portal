@@ -2,16 +2,16 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 23:28:42
+ * @LastEditTime: 2023-09-06 07:31:57
  * @Description: 业务代码，加载各个模块
  */
 package app
 
 import (
-	"fbs-portal/app/basis"
-	"fbs-portal/ui"
 	"fmt"
 	"net/http"
+	"portal/app/basis"
+	"portal/ui"
 
 	"github.com/fbs-io/core"
 	"github.com/gin-gonic/gin"
