@@ -13,15 +13,15 @@
 		<el-container>
 				<el-header>
 					<div class="left-panel">
-						<el-button type="primary" icon="el-icon-plus" @click="add"></el-button>
-						<el-button type="danger" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-						<el-button type="primary" plain :disabled="selection.length==0">分配角色</el-button>
-						<el-button type="primary" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
+						<el-button type="primary" v-auth="auth.add" icon="el-icon-plus" @click="add"></el-button>
+						<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0">分配角色</el-button>
+						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
 					<div class="right-panel">
 						<div class="right-panel-search">
 							<el-input v-model="search.nick_name" placeholder="姓名" clearable></el-input>
-							<el-button type="primary" icon="el-icon-search" @click="upsearch"></el-button>
+							<el-button type="primary" v-auth="auth.list" icon="el-icon-search" @click="upsearch"></el-button>
 						</div>
 					</div>
 				</el-header>
@@ -45,14 +45,14 @@
 							</template>
 						</el-table-column>
 						<el-table-column label="加入时间" prop="created_at"  :formatter="timestampToTime" width="170" sortable='custom'></el-table-column>
-						<el-table-column label="操作" fixed="right" align="right" width="160">
+						<el-table-column label="操作" fixed="right" align="right" width="180">
 							<template #default="scope">
 								<el-button-group>
-									<el-button text type="primary" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-									<el-button text type="primary" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+									<el-button text type="primary" v-auth="auth.list" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
+									<el-button text type="primary" v-auth="auth.edit" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 									<el-popconfirm title="确定删除吗？" @confirm="table_del(scope.row, scope.$index)">
 										<template #reference>
-											<el-button text type="primary" size="small">删除</el-button>
+											<el-button  v-auth="auth.delete" text type="primary" size="small">删除</el-button>
 										</template>
 									</el-popconfirm>
 								</el-button-group>
@@ -91,6 +91,12 @@ import saveDialog from './save'
 					nick_name: null
 				},
 				roles:[],
+				auth:{
+					add: 'put:ajax:basis:users:add',
+					edit: 'post:ajax:basis:users:edit',
+					list: 'get:ajax:basis:users:list',
+					delete: 'delete:ajax:basis:users:delete',
+				}
 			}
 		},
 		watch: {
@@ -226,7 +232,7 @@ import saveDialog from './save'
 				row.$switch_status = true;
 				setTimeout(()=>{
 					delete row.$switch_status;
-					var res = this.$API.basis_auth.user.update.put({id:row.id,status:row.status});
+					var res = this.$API.basis_auth.users.edit({id:[row.id],status:row.status});
 				}, 1000)
 			},
 
@@ -242,7 +248,7 @@ import saveDialog from './save'
 				}
 				roles.forEach(item =>{
 					var index = item
-					var role = this.roles.filter(item => item.id == index)[0]
+					var role = this.roles.filter(item => item.code == index)[0]
 					if (role){
 						data.unshift(role.label)
 					}

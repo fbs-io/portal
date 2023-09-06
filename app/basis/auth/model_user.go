@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:14:47
+ * @LastEditTime: 2023-09-04 22:06:32
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -105,12 +105,12 @@ func (user *User) chpwd(param *userChPwdParams) (err error) {
 	return
 }
 
-// 用户更新
-func (user *User) update(tx *gorm.DB, param *userUpdateParams) (err error) {
-	user.NickName = param.NickName
-	user.Email = param.Email
-	user.Role = param.Role
-	user.ID = param.ID
-	user.Status = param.Status
-	return tx.Updates(user).Error
-}
+// // 用户更新
+// func (user *User) update(tx *gorm.DB, param *userUpdateParams) (err error) {
+// 	user.NickName = param.NickName
+// 	user.Email = param.Email
+// 	user.Role = param.Role
+// 	user.ID = param.ID
+// 	user.Status = param.Status
+// 	return tx.Updates(user).Error
+// }

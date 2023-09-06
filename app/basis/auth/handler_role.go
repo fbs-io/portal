@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:24:27
+ * @LastEditTime: 2023-09-05 05:01:13
  * @Description: 角色相关api逻辑
  */
 package auth
@@ -90,6 +90,7 @@ func rolesQuery() core.HandlerFunc {
 // id作为数组, 不适用于自动查询条件生成
 type rolesUpdateParams struct {
 	ID          []uint           `json:"id"  binding:"required" conditions:"-"`
+	Label       string           `json:"label" conditions:"-"`
 	Sort        int              `json:"json" conditions:"-"`
 	Description string           `json:"description" conditions:"-"`
 	Sources     rdb.ModeListJson `json:"sources" conditions:"-"`
@@ -101,6 +102,7 @@ func rolesUpdate() core.HandlerFunc {
 		param := ctx.CtxGetParams().(*rolesUpdateParams)
 		tx := ctx.TX()
 		role := &Role{
+			Label:       param.Label,
 			Sort:        param.Sort,
 			Description: param.Description,
 			Sources:     param.Sources,

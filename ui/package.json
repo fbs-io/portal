@@ -19,6 +19,7 @@
     "install": "^0.13.0",
     "nprogress": "^0.2.0",
     "pinia": "^2.0.21",
+    "pnpm": "^8.7.1",
     "qrcodejs2": "^0.0.2",
     "qrcodejs2-fix": "^0.0.1",
     "sortablejs": "^1.15.0",

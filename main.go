@@ -2,15 +2,15 @@
  * @Author: reel
  * @Date: 2023-06-24 08:50:38
  * @LastEditors: reel
- * @LastEditTime: 2023-07-30 22:18:51
+ * @LastEditTime: 2023-09-06 07:29:34
  * @Description: 入口函数
  */
 package main
 
 import (
-	"fbs-portal/app"
 	"fmt"
 	"os"
+	"portal/app"
 
 	"github.com/fbs-io/core"
 )
