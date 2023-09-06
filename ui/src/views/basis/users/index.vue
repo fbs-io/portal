@@ -1,6 +1,6 @@
 <template>
-	<el-container>
-		<el-aside width="200px" v-loading="showGrouploading">
+	<!-- <el-container> -->
+		<!-- <el-aside width="200px" v-loading="showGrouploading">
 			<el-container>
 				<el-header>
 					<el-input placeholder="输入关键字进行过滤" v-model="groupFilterText" clearable></el-input>
@@ -9,13 +9,13 @@
 					<el-tree ref="group" class="menu" node-key="id" :data="group" :current-node-key="''" :highlight-current="true" :expand-on-click-node="false" :filter-node-method="groupFilterNode" @node-click="groupClick"></el-tree>
 				</el-main>
 			</el-container>
-		</el-aside>
+		</el-aside> -->
 		<el-container>
 				<el-header>
 					<div class="left-panel">
 						<el-button type="primary" v-auth="auth.add" icon="el-icon-plus" @click="add"></el-button>
 						<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0">分配角色</el-button>
+						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
 						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
 					<div class="right-panel">
@@ -37,7 +37,7 @@
 						
 						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
-						<el-table-column label="邮箱" prop="email" width="130" sortable='custom'></el-table-column>
+						<el-table-column label="邮箱" prop="email" width="200" sortable='custom'></el-table-column>
 						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatRoles"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
@@ -62,25 +62,28 @@
 					</scTable>
 				</el-main>
 		</el-container>
-	</el-container>
+	<!-- </el-container> -->
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
+	<role-dialog v-if="dialog.role" ref="roleDialog" @success="handleSuccess" @closed="dialog.role=false"></role-dialog>
 
 </template>
 
 <script>
-	import { ref } from 'vue';
-import saveDialog from './save'
+	import saveDialog from './save'
+	import roleDialog from './role'
 
 	export default {
 		name: 'user',
 		components: {
-			saveDialog
+			saveDialog,
+			roleDialog,
 		},
 		data() {
 			return {
 				dialog: {
-					save: false
+					save: false,
+					role: false,
 				},
 				showGrouploading: false,
 				groupFilterText: '',
@@ -109,6 +112,8 @@ import saveDialog from './save'
 			this.getRoles()
 		},
 		methods: {
+			
+
 			//添加
 			add(){
 				this.dialog.save = true
@@ -175,6 +180,14 @@ import saveDialog from './save'
 				}).catch(() => {
 				})
 			},
+			// 批量分配角色
+			async batch_set_role(){
+				this.dialog.role = true
+				this.$nextTick(() => {
+					// 把选择的id传个role组件
+					this.$refs.roleDialog.open(this.select_id())
+				})
+			},
 			//表格选择后回调事件
 			selectionChange(selection){
 				this.selection = selection;
@@ -206,14 +219,14 @@ import saveDialog from './save'
 			},
 			//本地更新数据
 			handleSuccess(data, mode){
-				if(mode=='add'){
+				// if(mode=='add'){
+				// 	this.$refs.table.reload()
+				// }else if(mode=='edit'){
+				// 	this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
+				// 		Object.assign(item, data)
+				// 	})
 					this.$refs.table.reload()
-				}else if(mode=='edit'){
-					this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
-						Object.assign(item, data)
-					})
-					this.$refs.table.reload()
-				}
+				// }
 			},
 			// 时间序列化
 			timestampToTime (row, column) {

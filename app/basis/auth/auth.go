@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 05:41:43
+ * @LastEditTime: 2023-09-06 20:12:30
  * @Description: 请填写简介
  */
 package auth
@@ -89,33 +89,37 @@ func New(route core.RouterGroup) {
 	// 用户列表管理, 用于批量管理用户
 	users := route.Group("users", "用户管理")
 	{
-
-		users.PUT("add", "添加用户", userAddParams{}, userAdd())
 		// 获取用户列表
 		users.GET("list", "用户列表", usersQueryParams{}, usersQuery())
-		// 批量更新用户
+		// 添加用户
+		users.PUT("add", "添加用户", userAddParams{}, userAdd())
+		// 更新用户
 		users.POST("edit", "更新用户", usersUpdateParams{}, usersUpdate())
-		// 批量更新, 也适用于单个用户
+		// 删除用户, 逻辑删除,
 		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
 	}
 
 	roles := route.Group("roles", "角色管理")
 	{
+		// 角色列表
+		roles.GET("list", "角色列表", rolesQueryParams{}, rolesQuery())
 		// 单行添加
 		roles.PUT("add", "添加角色", roleAddParams{}, roleAdd())
-
-		// 批量操作
-		roles.GET("list", "角色列表", rolesQueryParams{}, rolesQuery())
+		// 更新用户
 		roles.POST("edit", "编辑角色", rolesUpdateParams{}, rolesUpdate())
+		// 删除用户, 逻辑删除
 		roles.DELETE("delete", "删除角色", rolesDeleteParams{}, rolesDelete())
 	}
 
 	menus := route.Group("menus", "菜单管理")
 	{
-		// 单行添加
-		menus.PUT("add", "添加角色", menusAddParams{}, menusAdd())
-		menus.GET("list", "添加角色", nil, menusQuery())
-		menus.POST("edit", "添加角色", menusUpdateParams{}, menusUpdate())
+		// 菜单列表
+		menus.GET("list", "菜单列表", nil, menusQuery())
+		// 添加菜单
+		menus.PUT("add", "添加菜单", menusAddParams{}, menusAdd())
+		// 更新菜单
+		menus.POST("edit", "更新菜单", menusUpdateParams{}, menusUpdate())
+		// 删除菜单, 逻辑删除
 		menus.DELETE("delete", "添加角色", menusDeleteParams{}, menusDelete())
 	}
 }
