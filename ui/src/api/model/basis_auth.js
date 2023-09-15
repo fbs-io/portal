@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 18:57:57
+ * @LastEditTime: 2023-09-15 06:51:22
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -88,6 +88,11 @@ export default {
 		// 批量删除
 		delete: async function(data={}){
 			return await http.delete(`${config.API_URL}/basis/roles/delete`, data);
+		},
+
+		// 获取权限菜单树表
+		permission: async function(data={}){
+			return await http.get(`${config.API_URL}/basis/roles/permission`, data);
 		},
 	},
 

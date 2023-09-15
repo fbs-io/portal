@@ -1,15 +1,8 @@
 /*
  * @Author: reel
- * @Date: 2023-09-02 09:18:15
- * @LastEditors: reel
- * @LastEditTime: 2023-09-05 05:34:24
- * @Description: 请填写简介
- */
-/*
- * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:24:27
+ * @LastEditTime: 2023-09-15 06:47:39
  * @Description: 菜单相关api逻辑
  */
 package auth
@@ -20,21 +13,22 @@ import (
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/store/rdb"
+	"github.com/google/uuid"
 )
 
 // TODO:补充其他用户信息, 如部门等
 // 设计思路: 用户和员工分开, 用户可以绑定员工, 但员工不一定有登陆账户
 type menusAddParams struct {
-	Code       string          `json:"code" binding:"required"`
-	Desc       string          `json:"desc"`
-	PCode      string          `json:"pcode" binding:"required"`
-	Level      int8            `json:"level" `
+	// Code       string          `json:"code" `
+	Desc       string          `json:"desc" binding:"required"`
+	PCode      string          `json:"pcode"`
+	Level      int8            `json:"level"`
 	Api        string          `json:"api"`
-	Type       int8            `json:"type"`
+	Type       int8            `json:"type" binding:"required,gte=6,lte=9"`
 	Method     string          `json:"method"`
 	Params     string          `json:"params"`
 	AcceptType string          `json:"accept_type"`
-	IsRouter   int8            `json:"is_router"`
+	IsRouter   int8            `json:"is_router" binding:"required"`
 	Path       string          `json:"path"`
 	Component  string          `json:"component"`
 	Meta       rdb.ModeMapJson `json:"meta"` // 前端组件原信息
@@ -46,7 +40,7 @@ func menusAdd() core.HandlerFunc {
 		tx := ctx.TX()
 
 		menu := &core.Sources{}
-		menu.Code = param.Code
+		menu.Code = uuid.New().String()
 		menu.PCode = param.PCode
 		menu.Level = param.Level
 		menu.Desc = param.Desc
@@ -59,6 +53,17 @@ func menusAdd() core.HandlerFunc {
 		menu.Path = param.Path
 		menu.Component = param.Component
 		menu.Meta = param.Meta
+
+		if param.PCode != "" {
+			menu2 := &core.Sources{}
+			err := tx.Model(menu).Where("code = ?", param.PCode).Find(menu2).Error
+			if err != nil {
+				ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
+				return
+			}
+			menu.Level = menu2.Level + 1
+
+		}
 
 		err := tx.Create(menu).Error
 		if err != nil {
@@ -75,9 +80,9 @@ func menusAdd() core.HandlerFunc {
 }
 
 // 菜单查询, 返回树表结构
-func menusQuery() core.HandlerFunc {
+func menusQueryWithManager() core.HandlerFunc {
 	return func(ctx core.Context) {
-		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), "manage")
+		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), QUERY_MENU_MODE_MANAGE)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return

@@ -2,8 +2,8 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 05:36:19
- * @Description: 临时生成菜单用
+ * @LastEditTime: 2023-09-15 06:22:41
+ * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
 
@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	QUERY_MENU_MODE_INFO   = "info"   // 用户登录时, 返回的菜单信息, 包含不受限菜单和资源
-	QUERY_MENU_MODE_MANAGE = "manage" // 用于菜单管理返回的数据, 仅返回受限的菜单和资源(api), 用于权限设置或修改, 不受限的菜单和资源并不需要显示
+	QUERY_MENU_MODE_INFO       = "info"       // 用户登录时, 返回的菜单信息, 包含不受限菜单和资源
+	QUERY_MENU_MODE_MANAGE     = "manage"     // 用于菜单管理返回的数据, 返回所有的菜单和资源用于前端设置, 查看
+	QUERY_MENU_MODE_PERMISSION = "permission" // 用于菜单管理返回的数据, 仅返回受限的菜单和资源(api), 用于权限设置或修改
 )
 
 type menuTree struct {
@@ -75,13 +76,18 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 	switch mode {
 
 	// 登陆后返回的菜单信息
-	case "info":
+	case QUERY_MENU_MODE_INFO:
 		cond.Where["is_router = (?) "] = core.SOURCE_ROUTER_IS
 		if user.Super != "Y" {
 			cond.Where["code in (?) or type in (1,3,5)"] = permissionList
 		}
 	// 菜单管理用的
-	case "manage":
+	case QUERY_MENU_MODE_MANAGE:
+		cond.Where["type > (?)"] = 0
+		if user.Super != "Y" {
+			cond.Where["code in (?) "] = permissionList
+		}
+	case QUERY_MENU_MODE_PERMISSION:
 		cond.Where["type in (?)"] = []int8{core.SOURCE_TYPE_MENU, core.SOURCE_TYPE_PERMISSION}
 		if user.Super != "Y" {
 			cond.Where["code in (?) "] = permissionList
@@ -92,7 +98,6 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 
 	menuList := make([]*core.Sources, 0, 1000)
 	tx := c.RDB().BuildQuery(cond).Offset(-1).Limit(-1)
-	// tx.Or("type in (?)", []int8{core.SOURCE_TYPE_UNLIMITED, core.SOURCE_TYPE_UNMENU, core.SOURCE_TYPE_UNPERMISSION})
 	err = tx.Find(&menuList).Error
 	if err != nil {
 		return
@@ -122,7 +127,6 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 			Path:       m.Path,
 			Component:  m.Component,
 			Meta:       m.Meta,
-			Children:   make([]*menuTree, 0, 100),
 		}
 		if menuMap[m.Level] == nil {
 			menuMap[m.Level] = make(map[string]*menuTree)

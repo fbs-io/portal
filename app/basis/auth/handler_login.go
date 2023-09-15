@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 06:50:54
+ * @LastEditTime: 2023-09-15 06:21:53
  * @Description: 请填写简介
  */
 package auth
@@ -42,7 +42,7 @@ func login() core.HandlerFunc {
 		ctx.Core().Session().SetWithCsrfToken(ctx.Ctx().Writer, sessionKey, user.Account)
 
 		// 菜单获取
-		menu, permissionList, _ := getMenuTree(ctx.Core(), user.Account, "info")
+		menu, permissionList, _ := getMenuTree(ctx.Core(), user.Account, QUERY_MENU_MODE_INFO)
 
 		if user.Super == "Y" {
 			cond := rdb.NewCondition()

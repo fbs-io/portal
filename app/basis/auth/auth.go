@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-06 20:12:30
+ * @LastEditTime: 2023-09-15 06:47:49
  * @Description: 请填写简介
  */
 package auth
@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/fbs-io/core"
+	"github.com/fbs-io/core/pkg/env"
 	"gorm.io/gorm"
 )
 
@@ -62,14 +63,16 @@ func GetRole(id uint, tx *gorm.DB) (role *Role) {
 
 func New(route core.RouterGroup) {
 
-	user := &User{}
-	user.Account = "root"
-	user.Password = "root123"
-	user.NickName = "超级管理员"
-	user.Super = "Y"
-	// 注册表
+	// 注册超级管理员, 根据设置的后台管理员注册app管理员
 	tx := route.Core().RDB()
-	tx.Register(&User{}, func() error { return tx.DB().Create(user).Error })
+	tx.Register(&User{}, func() error {
+		return tx.DB().Create(&User{
+			Account:  route.Core().Config().User,
+			Password: route.Core().Config().Pwd,
+			NickName: "超级管理员",
+			Super:    "Y",
+		}).Error
+	})
 	tx.Register(&Role{})
 
 	// 用户个人信息操作
@@ -87,7 +90,7 @@ func New(route core.RouterGroup) {
 	}
 
 	// 用户列表管理, 用于批量管理用户
-	users := route.Group("users", "用户管理")
+	users := route.Group("users", "用户管理").WithMeta("icon", "el-icon-user")
 	{
 		// 获取用户列表
 		users.GET("list", "用户列表", usersQueryParams{}, usersQuery())
@@ -99,7 +102,7 @@ func New(route core.RouterGroup) {
 		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
 	}
 
-	roles := route.Group("roles", "角色管理")
+	roles := route.Group("roles", "角色管理").WithMeta("icon", "el-icon-switch-filled")
 	{
 		// 角色列表
 		roles.GET("list", "角色列表", rolesQueryParams{}, rolesQuery())
@@ -109,17 +112,22 @@ func New(route core.RouterGroup) {
 		roles.POST("edit", "编辑角色", rolesUpdateParams{}, rolesUpdate())
 		// 删除用户, 逻辑删除
 		roles.DELETE("delete", "删除角色", rolesDeleteParams{}, rolesDelete())
+		// 权限菜单列表
+		roles.GET("permission", "菜单列表", nil, menusQueryWithPermission())
 	}
 
-	menus := route.Group("menus", "菜单管理")
-	{
-		// 菜单列表
-		menus.GET("list", "菜单列表", nil, menusQuery())
-		// 添加菜单
-		menus.PUT("add", "添加菜单", menusAddParams{}, menusAdd())
-		// 更新菜单
-		menus.POST("edit", "更新菜单", menusUpdateParams{}, menusUpdate())
-		// 删除菜单, 逻辑删除
-		menus.DELETE("delete", "添加角色", menusDeleteParams{}, menusDelete())
+	//
+	if env.Active().Value() == env.ENV_MODE_DEV {
+		menus := route.Group("menus", "菜单管理")
+		{
+			// 菜单列表
+			menus.GET("list", "菜单列表", nil, menusQueryWithManager())
+			// 添加菜单
+			menus.PUT("add", "添加菜单", menusAddParams{}, menusAdd())
+			// 更新菜单
+			menus.POST("edit", "更新菜单", menusUpdateParams{}, menusUpdate())
+			// 删除菜单, 逻辑删除
+			menus.DELETE("delete", "添加角色", menusDeleteParams{}, menusDelete())
+		}
 	}
 }

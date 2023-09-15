@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 05:01:13
+ * @LastEditTime: 2023-09-15 06:47:19
  * @Description: 角色相关api逻辑
  */
 package auth
@@ -137,5 +137,17 @@ func rolesDelete() core.HandlerFunc {
 			return
 		}
 		ctx.JSON(errno.ERRNO_OK.Notify())
+	}
+}
+
+// 菜单和权限查询, 返回树表结构
+func menusQueryWithPermission() core.HandlerFunc {
+	return func(ctx core.Context) {
+		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), QUERY_MENU_MODE_PERMISSION)
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(menus))
 	}
 }

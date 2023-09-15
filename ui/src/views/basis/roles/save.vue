@@ -175,7 +175,7 @@
 			},
 			// 菜单列表
 			async getMenu(){
-				var res = await this.$API.basis_auth.menus.list()
+				var res = await this.$API.basis_auth.roles.permission()
 				this.menu.list = res.details
 
 				// //获取接口返回的之前选中的和半选的合并，处理过滤掉有叶子节点的key
