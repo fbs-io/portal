@@ -3,7 +3,7 @@
  # @Author: reel
  # @Date: 2023-09-06 06:22:26
  # @LastEditors: reel
- # @LastEditTime: 2023-09-06 06:22:28
+ # @LastEditTime: 2023-09-15 22:47:15
  # @Description: 请填写简介
 ### 
  # @Description: 
@@ -14,7 +14,7 @@
  # @LastEditors: LenLee
  # @FilePath: /fbs/stop.sh
 ### 
-kill_pid=`ps -ef | grep ./fbs_portal | awk '{print $2}'`
+kill_pid=`ps -ef | grep fbs_portal | awk '{print $2}'`
 if [ -n "${kill_pid}" ]
 then
     kill -9 ${kill_pid}

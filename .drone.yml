@@ -43,6 +43,7 @@ steps:
       from_secret: fbsportal_dev_target
     source: 
       - ./fbs_portal
+      - ./shop.sh
     command_timeout: 2m
 
 - name: dev-start

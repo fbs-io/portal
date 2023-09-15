@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:47:49
+ * @LastEditTime: 2023-09-16 06:46:41
  * @Description: 请填写简介
  */
 package auth
@@ -78,7 +78,7 @@ func New(route core.RouterGroup) {
 	// 用户个人信息操作
 	//
 	// 如登陆, 注销, 密码变更, 信息更改等
-	info := route.Group("user", "账户信息").WithPermission(core.SOURCE_TYPE_UNMENU).WithHidden()
+	info := route.Group("user", "账户信息").WithPermission(core.SOURCE_TYPE_UNMENU).WithHidden().WithMeta("affix", true)
 	{
 
 		// 允许鉴权例外
@@ -90,7 +90,7 @@ func New(route core.RouterGroup) {
 	}
 
 	// 用户列表管理, 用于批量管理用户
-	users := route.Group("users", "用户管理").WithMeta("icon", "el-icon-user")
+	users := route.Group("users", "用户管理").WithMeta("icon", "el-icon-user").WithMeta("affix", true)
 	{
 		// 获取用户列表
 		users.GET("list", "用户列表", usersQueryParams{}, usersQuery())
@@ -102,7 +102,7 @@ func New(route core.RouterGroup) {
 		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
 	}
 
-	roles := route.Group("roles", "角色管理").WithMeta("icon", "el-icon-switch-filled")
+	roles := route.Group("roles", "角色管理").WithMeta("icon", "el-icon-switch-filled").WithMeta("affix", true)
 	{
 		// 角色列表
 		roles.GET("list", "角色列表", rolesQueryParams{}, rolesQuery())
@@ -118,7 +118,7 @@ func New(route core.RouterGroup) {
 
 	//
 	if env.Active().Value() == env.ENV_MODE_DEV {
-		menus := route.Group("menus", "菜单管理")
+		menus := route.Group("menus", "菜单管理").WithMeta("affix", true)
 		{
 			// 菜单列表
 			menus.GET("list", "菜单列表", nil, menusQueryWithManager())
