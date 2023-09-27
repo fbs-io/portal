@@ -2,12 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 22:06:32
+ * @LastEditTime: 2023-09-18 19:41:44
  * @Description: 用户表,管理用户信息
  */
 package auth
 
 import (
+	"portal/pkg/consts"
+
 	"github.com/fbs-io/core/store/rdb"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -41,7 +43,8 @@ type UserList struct {
 }
 
 func (u *User) TableName() string {
-	return "e_auth_user"
+	return consts.TABLE_BASIS_AUTH_USER
+
 }
 
 // gorm中间件操作

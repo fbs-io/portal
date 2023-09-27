@@ -2,12 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:27
  * @LastEditors: reel
- * @LastEditTime: 2023-09-01 06:27:12
+ * @LastEditTime: 2023-09-18 19:42:19
  * @Description: 请填写简介
  */
 package auth
 
 import (
+	"portal/pkg/consts"
+
 	"github.com/fbs-io/core/store/rdb"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -22,19 +24,8 @@ type Role struct {
 	rdb.Model
 }
 
-// type RoleList struct {
-// 	Code        string           `json:"code"`
-// 	ID          uint             `json:"id"`
-// 	Label       string           `json:"label"`
-// 	Sort        int              `json:"json"`
-// 	Description string           `json:"description"`
-// 	Sources     rdb.ModeListJson `json:"sources" gorm:"type:varchar(1000)"`
-// 	CreatedAt   uint64           `json:"created_at"`
-// 	Status      int8             `json:"status"`
-// }
-
 func (r *Role) TableName() string {
-	return "e_auth_role"
+	return consts.TABLE_BASIS_AUTH_ROLE
 }
 
 // gorm 中间件操作
@@ -52,10 +43,4 @@ func (r *Role) BeforeUpdate(tx *gorm.DB) error {
 func (r *Role) BeforeDelete(tx *gorm.DB) error {
 	r.Model.BeforeDelete(tx)
 	return nil
-}
-
-// 模型接口
-
-func (r *Role) RoleInfo() map[string]interface{} {
-	return map[string]interface{}{}
 }
