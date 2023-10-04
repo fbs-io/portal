@@ -2,19 +2,32 @@
  * @Author: reel
  * @Date: 2023-09-18 21:26:33
  * @LastEditors: reel
- * @LastEditTime: 2023-09-27 21:48:25
+ * @LastEditTime: 2023-09-30 12:06:52
  * @Description: 请填写简介
  */
 package org
 
-import "github.com/fbs-io/core"
+import (
+	"portal/pkg/sequence"
+
+	"github.com/fbs-io/core"
+)
 
 func New(route core.RouterGroup) {
 	tx := route.Core().RDB()
-	tx.Register(&Org{})
+	tx.Register(&Company{})
 
-	orgGroup := route.Group("org", "组织管理")
+	// 公司code生成器
+	companySeq := sequence.New(route.Core(), "org_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
+
+	orgGroup := route.Group("org", "组织管理").WithMeta("icon", "sc-icon-organization")
+
+	// 可以作为帐套使用或作为环境隔离
+	group := orgGroup.Group("company", "公司管理").WithMeta("icon", "sc-icon-company")
 	{
-		orgGroup.GET("add", "新增组织", OrgAddParams{}, add()).WithPermission(core.SOURCE_TYPE_UNLIMITED).WithAllowSignature()
+		group.GET("list", "公司列表", companyQueryParams{}, companyList())
+		group.PUT("add", "新增公司", companyAddParams{}, companyAdd(companySeq))
+		group.POST("edit", "修改公司", companyEditParams{}, companyEdit())
+		group.DELETE("delete", "删除公司", companyDeleteParams{}, companyDelete())
 	}
 }

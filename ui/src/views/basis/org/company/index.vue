@@ -2,8 +2,8 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 21:28:39
- * @Description: 角色管理
+ * @LastEditTime: 2023-10-04 21:23:47
+ * @Description: 请填写简介
 -->
 <template>
 	<el-container>
@@ -11,11 +11,10 @@
 			<div class="left-panel">
 				<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
 				<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-				<!-- <el-button type="primary" plain :disabled="selection.length!=1" @click="permission">权限设置</el-button> -->
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
-					<el-input v-model="search.label" placeholder="角色名称" clearable></el-input>
+					<el-input v-model="search.company_name" placeholder="公司名称" clearable></el-input>
 					<el-button type="primary"  v-auth="auth.get"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
 			</div>
@@ -24,9 +23,11 @@
 			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>
 				<el-table-column type="selection" width="50"></el-table-column>
 				<el-table-column label="#" porp="id" type="index" width="50"></el-table-column>
-				<el-table-column label="角色名称" prop="label" width="150"></el-table-column>
-				<el-table-column label="角色描述" prop="description" width="360"></el-table-column>
-				<el-table-column label="排序" prop="sort" width="80"></el-table-column>
+				<el-table-column label="公司编码" sortable='custom' prop="company_code" width="120"></el-table-column>
+				<el-table-column label="公司名称" sortable='custom' prop="company_name" width="200"></el-table-column>
+				<el-table-column label="公司简称" sortable='custom' prop="company_shortname" width="120"></el-table-column>
+				<el-table-column label="公司描述" sortable='custom' prop="company_comment" width="150"></el-table-column>
+				<el-table-column label="所属行业" sortable='custom' prop="company_business" width="120"></el-table-column>
 				<el-table-column label="状态" prop="status" width="80">
 					<template #default="scope">
 						<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -39,8 +40,8 @@
 				<el-table-column label="操作" fixed="right" align="right" width="170">
 					<template #default="scope">
 						<el-button-group>
-							<el-button text type="primary"  v-auth="permissions.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-							<el-button text type="primary"  v-auth="permissions.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+							<!-- <el-button text type="primary"  v-auth="permissions.list" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button> -->
+							<el-button text type="primary"  v-auth="auth.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
 									<el-button text type="primary"  v-auth="auth.delete"  size="small">删除</el-button>
@@ -55,9 +56,6 @@
 	</el-container>
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
-	<!-- <save-dialog v-if="dialog.save" ref="saveDialog" @closed="dialog.save=false"></save-dialog> -->
-
-	<!-- <permission-dialog v-if="dialog.permission" ref="permissionDialog" @closed="dialog.permission=false"></permission-dialog> -->
 
 </template>
 
@@ -79,7 +77,7 @@
 				showGrouploading: false,
 				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.basis_auth.roles.list,
+				apiObj: this.$API.basis_org.company.list,
 				selection: [],
 				search: {
 					company_name: null
@@ -97,10 +95,8 @@
 				this.$refs.group.filter(val);
 			}
 		},
-
 		mounted() {
 			// this.getGroup()
-			this.getUiPermission()
 		},
 		methods: {
 			//添加
@@ -134,7 +130,7 @@
 			//删除
 			async table_del(row, index){
 				var reqData = {id: [row.id]}
-				await this.$API.basis_auth.roles.delete(reqData);
+				await this.$API.basis_org.company.delete(reqData);
 				this.$refs.table.tableData.splice(index, 1)
 				this.$refs.table.reload()
 			},
@@ -153,7 +149,7 @@
 						reqData.unshift(item.id)
 					})
 					const loading = this.$loading();
-					this.$API.basis_auth.roles.delete({id: reqData})
+					this.$API.basis_org.company.delete({id: reqData})
 					loading.close();
 					this.$refs.table.reload()
 				}).catch(() => {
@@ -164,32 +160,7 @@
 			selectionChange(selection){
 				this.selection = selection;
 			},
-			async getUiPermission(){
-				var path = this.$router.currentRoute.value.fullPath
-				var res = await this.$API.common.uiPermissions.get({path:path})
-				this.auth = res.details
-			},
-			// //加载树数据 TODO: 后期增加角色组
-			// async getGroup(){
-			// 	this.showGrouploading = true;
-			// 	var res = await this.$API.basis_auth.roles.list();
-			// 	this.showGrouploading = false;
-			// 	var allNode ={id: '', label: '所有'}
-			// 	// res.data.unshift(allNode);
-			// 	this.group = res.data;
-			// },
-			//树过滤
-			// groupFilterNode(value, data){
-			// 	if (!value) return true;
-			// 	return data.label.indexOf(value) !== -1;
-			// },
-			// //树点击事件
-			// groupClick(data){
-			// 	var params = {
-			// 		groupId: data.id
-			// 	}
-			// 	this.$refs.table.reload(params)
-			// },
+
 			//搜索
 			upsearch(){
 				this.$refs.table.upData(this.search)
@@ -222,8 +193,13 @@
 				row.$switch_status = true;
 				setTimeout(()=>{
 					delete row.$switch_status;
-					var res = this.$API.basis_auth.roles.edit({id:[row.id],status:row.status});
+					var res = this.$API.basis_org.company.edit({id:[row.id],status:row.status});
 				}, 1000)
+			},
+			async getUiPermission(){
+				var path = this.$router.currentRoute.value.fullPath
+				var res = await this.$API.common.uiPermissions.get({path:path})
+				this.auth = res.details
 			},
 		}
 	}

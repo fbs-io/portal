@@ -4,7 +4,7 @@
  * @Author: sakuya
  * @Date: 2021年11月29日21:51:15
  * @LastEditors: reel
- * @LastEditTime: 2023-08-30 06:40:58
+ * @LastEditTime: 2023-10-04 17:30:39
 -->
 
 <template>
@@ -73,7 +73,7 @@
 		},
 		props: {
 			tableName: { type: String, default: "" },
-			apiObj: { type: Object, default: () => {} },
+			apiObj: { type: Function, default: () => {} },
 			params: { type: Object, default: () => ({}) },
 			data: { type: Object, default: () => {} },
 			height: { type: [String,Number], default: "100%" },

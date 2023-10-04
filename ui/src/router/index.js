@@ -18,15 +18,6 @@ const otherModules = {
 	'empty': () => import('@/layout/other/empty.vue'),
 }
 
-//系统特殊路由
-const routes_404 = {
-	path: "/:pathMatch(.*)*",
-	hidden: true,
-	component: () => import('@/layout/other/404'),
-}
-
-let routes_404_r = ()=>{}
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: routes
@@ -38,42 +29,36 @@ document.title = config.APP_NAME
 //判断是否已加载过动态/静态路由
 var isGetRouter = false
 
+
 router.beforeEach(async (to, from, next) => {
+	NProgress.start()
 
-  NProgress.start()
-
-  //动态标题
+	//动态标题
 	document.title = to.meta.title ? `${to.meta.title} - ${config.APP_NAME}` : `${config.APP_NAME}`
-
 	let token = tool.cookie.get("TOKEN");
 	if(to.path === "/login"){
 		//删除路由(替换当前layout路由)
 		router.addRoute(routes[0])
-		//删除路由(404)
-		routes_404_r()
 		isGetRouter = false;
 		next();
 		return false;
 	}
-
 	if(routes.findIndex(r => r.path === to.path) >= 0){
 		next();
 		return false;
 	}
-
 	if(!token){
 		next({
 			path: '/login'
 		});
 		return false;
 	}
-
+	
 	//整页路由处理
 	if(to.meta.fullpage){
 		to.matched = [to.matched[to.matched.length-1]]
 	}
-
-  // 加载动态/静态路由
+	// 加载动态/静态路由
 	if(!isGetRouter){
 		let apiMenu = tool.data.get("MENU") || []
 		let userInfo = tool.data.get("USER_INFO")
@@ -86,18 +71,30 @@ router.beforeEach(async (to, from, next) => {
 		menuRouter.forEach(item => {
 			router.addRoute("layout", item)
 		})
-		routes_404_r = router.addRoute(routes_404)
+
 		if (to.matched.length == 0) {
-			router.push(to.fullPath);
+			router.push(to.path);
+		}
+		if (to.name === '404') {
+			next({ path: to.path, query: to.query })
+		} else {
+			// 请求带有 redirect 重定向时，登录自动重定向到该地址
+			if (from.query.redirect) {
+				const redirect = decodeURIComponent(from.query.redirect)
+				next({ path: redirect })
+			} else {
+				next({ ...to, replace: true })
+			}
 		}
 		isGetRouter = true;
+		return
 	}
 	if (to.matched.length == 0) {
-		router.push(to.fullPath);
+		router.push(to.path);
 	}
 
-	beforeEach(to, from)
 	next();
+
 });
 
 
@@ -149,13 +146,7 @@ function filterAsyncRouter(routerMap) {
 	})
 	return accessedRouters
 }
-// function loadComponent(component){
-// 	if(component){
-// 		return () => import(/* @vite-ignore */ `@/views/${component}/index.vue`)
-// 	}else{
-// 		return () => import(/* @vite-ignore */ `@/layout/other/empty.vue`)
-// 	}
-// }
+
 function loadComponent(component) {
 	if (component) {
 		for (const path in modules) {

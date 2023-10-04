@@ -301,7 +301,9 @@ export default {
 				'sc-icon-file-ppt',
 				'sc-icon-organization',
 				'sc-icon-upload',
-				'sc-icon-download'
+				'sc-icon-download',
+				'sc-icon-company',
+				'sc-icon-department'
 			]
 		}
 	]

@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-09-14 22:08:48
+ * @LastEditTime: 2023-10-04 15:02:37
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -47,6 +47,7 @@ func New(c core.Core) {
 	{
 		_ = ajax.Group("home", "首页").WithPermission(core.SOURCE_TYPE_UNMENU).WithMeta("icon", "el-icon-help-filled")
 
+		ajax.GET("uipermission", "页面权限", uiPermissionParams{}, uiPermission()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
 	}
 
 	// 初始化basis模块

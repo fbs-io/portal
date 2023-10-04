@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-18 07:12:21
+ * @LastEditTime: 2023-10-04 17:10:55
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -92,7 +92,7 @@ export default {
 
 		// 获取权限菜单树表
 		permission: async function(data={}){
-			return await http.get(`${config.API_URL}/basis/roles/auth/permission`, data);
+			return await http.get(`${config.API_URL}/basis/auth/roles/permission`, data);
 		},
 	},
 

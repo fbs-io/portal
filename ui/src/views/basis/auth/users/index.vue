@@ -13,15 +13,15 @@
 		<el-container>
 				<el-header>
 					<div class="left-panel">
-						<el-button type="primary" v-auth="auth.add" icon="el-icon-plus" @click="add"></el-button>
+						<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
 						<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
-						<el-button type="primary" v-auth="auth.edit" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
+						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
+						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
 					<div class="right-panel">
 						<div class="right-panel-search">
 							<el-input v-model="search.nick_name" placeholder="姓名" clearable></el-input>
-							<el-button type="primary" v-auth="auth.list" icon="el-icon-search" @click="upsearch"></el-button>
+							<el-button type="primary" v-auth="auth.get" icon="el-icon-search" @click="upsearch"></el-button>
 						</div>
 					</div>
 				</el-header>
@@ -48,8 +48,8 @@
 						<el-table-column label="操作" fixed="right" align="right" width="180">
 							<template #default="scope">
 								<el-button-group>
-									<el-button text type="primary" v-auth="auth.list" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-									<el-button text type="primary" v-auth="auth.edit" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+									<el-button text type="primary" v-auth="auth.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
+									<el-button text type="primary" v-auth="auth.post" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 									<el-popconfirm title="确定删除吗？" @confirm="table_del(scope.row, scope.$index)">
 										<template #reference>
 											<el-button  v-auth="auth.delete" text type="primary" size="small">删除</el-button>
@@ -95,10 +95,10 @@
 				},
 				roles:[],
 				auth:{
-					add: 'put:ajax:basis:users:add',
-					edit: 'post:ajax:basis:users:edit',
-					list: 'get:ajax:basis:users:list',
-					delete: 'delete:ajax:basis:users:delete',
+					put: '',
+					post: '',
+					get: '',
+					delete: '',
 				}
 			}
 		},
@@ -110,6 +110,7 @@
 		mounted() {
 			this.getGroup()
 			this.getRoles()
+			this.getUiPermission()
 		},
 		methods: {
 			
@@ -198,7 +199,6 @@
 				var res = await this.$API.basis_auth.users.list();
 				this.showGrouploading = false;
 				var allNode ={id: '', label: '所有'}
-				// res.data.unshift(allNode);
 				this.group = res.data;
 			},
 			//树过滤
@@ -219,14 +219,7 @@
 			},
 			//本地更新数据
 			handleSuccess(data, mode){
-				// if(mode=='add'){
-				// 	this.$refs.table.reload()
-				// }else if(mode=='edit'){
-				// 	this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
-				// 		Object.assign(item, data)
-				// 	})
 					this.$refs.table.reload()
-				// }
 			},
 			// 时间序列化
 			timestampToTime (row, column) {
@@ -268,8 +261,12 @@
 					
 				})
 				return data.join(", ")
-				
-			}
+			},
+			async getUiPermission(){
+				var path = this.$router.currentRoute.value.fullPath
+				var res = await this.$API.common.uiPermissions.get({path:path})
+				this.auth = res.details
+			},
 		}
 	}
 </script>

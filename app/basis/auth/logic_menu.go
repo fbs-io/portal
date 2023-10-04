@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:22:41
+ * @LastEditTime: 2023-09-29 21:43:13
  * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
@@ -23,6 +23,7 @@ type menuTree struct {
 	Code       string          `json:"code"`
 	PCode      string          `json:"pcode"`
 	Level      int8            `json:"levle"`
+	Name       string          `json:"name"`
 	Desc       string          `json:"desc"`
 	Api        string          `json:"api"`
 	Type       int8            `json:"type"`
@@ -116,6 +117,7 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 			ID:         m.ID,
 			Code:       m.Code,
 			PCode:      m.PCode,
+			Name:       m.Name,
 			Desc:       m.Desc,
 			Level:      m.Level,
 			Api:        m.Api,

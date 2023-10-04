@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-20 14:21:04
+ * @LastEditTime: 2023-10-04 21:19:44
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -21,17 +21,6 @@ const routes = [
 
 		]
 	},
-	// {		
-	// 	name: "userCenter",
-	// 	path: "/usercenter",
-	// 	meta:{
-	// 		"title": "帐号信息",
-	// 		"icon":  "el-icon-user",
-	// 		"tag":   "NEW",
-	// 	},
-	// 	// component: ()=>import("@/views/userCenter")
-	// 	component: "userCenter"
-	// },
 	{
 		path: "/login",
 		component: () => import('@/views/login'),
@@ -52,6 +41,16 @@ const routes = [
 		meta: {
 			title: "重置密码"
 		}
+	},
+	{
+		path: "/404",
+		hidden: true,
+		component: () => import('@/layout/other/404'),
+	},
+	{
+		path:"/:catchAll(.*)",
+		component: () => import('@/layout/other/404'),
+		hidden: true
 	}
 ]
 
