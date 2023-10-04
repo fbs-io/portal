@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 15:02:37
+ * @LastEditTime: 2023-10-05 00:15:55
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"portal/app/basis"
-	"portal/ui"
+	ui "portal/ui/dist"
 
 	"github.com/fbs-io/core"
 	"github.com/gin-gonic/gin"
@@ -20,6 +20,10 @@ import (
 func New(c core.Core) {
 	// 中间件使用
 	core.STATIC_PATH_PREFIX = "/website/"
+	// c.Engine().GET(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
+	// 	staticSrv := http.FileServer(http.FS(ui.Static))
+	// 	staticSrv.ServeHTTP(ctx.Writer, ctx.Request)
+	// })
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", "/"))
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", ""))
 
@@ -33,15 +37,18 @@ func New(c core.Core) {
 	// 权限校验
 
 	// 加载静态资源
-	c.Engine().Any(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
+	// static, _ := fs.Sub(ui.Static, core.STATIC_PATH_PREFIX)
+	// c.Engine().StaticFS("/website", http.FS(static))
+	c.Engine().GET(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
 		staticSrv := http.FileServer(http.FS(ui.Static))
 		staticSrv.ServeHTTP(ctx.Writer, ctx.Request)
 	})
+	// fs := http.FileServer(http.FS(ui.Static))
 	c.Engine().GET("/", func(ctx *gin.Context) {
 		ctx.Header("Content-Type", "text/html;charset=utf-8")
 		ctx.String(200, string(ui.Index))
 	})
-
+	// http.Handle("/", http.StripPrefix("/", fs))
 	// 加载
 	ajax := c.Group("ajax").WithPermission(core.SOURCE_TYPE_LIMITED)
 	{

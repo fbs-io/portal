@@ -1,9 +1,16 @@
+<!--
+ * @Author: reel
+ * @Date: 2023-07-30 22:36:55
+ * @LastEditors: reel
+ * @LastEditTime: 2023-10-04 23:06:37
+ * @Description: 请填写简介
+-->
 <template>
 	<el-container>
 		<el-header style="height:50px;">
 			<div class="common-header-left">
 				<div class="common-header-logo">
-					<img :alt="$CONFIG.APP_NAME" src="/img/logo.png">
+					<img :alt="$CONFIG.APP_NAME" src="/website/img/logo.png">
 					<label>{{$CONFIG.APP_NAME}}</label>
 				</div>
 				<div class="common-header-title">{{title}}</div>

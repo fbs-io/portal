@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 21:33:29
+ * @LastEditTime: 2023-10-04 21:48:26
  * @Description: 权限校验中间件
  */
 package app
@@ -49,11 +49,6 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 type uiPermissionParams struct {
 	Path string `form:"path" binding:"required" conditions:"like%"`
 }
-
-// type permissionResult struct {
-// 	Code string `json:"code"`
-// 	Method string `json:"method"`
-//  }
 
 func uiPermission() core.HandlerFunc {
 	return func(ctx core.Context) {

@@ -1,3 +1,10 @@
+<!--
+ * @Author: reel
+ * @Date: 2023-07-30 22:36:55
+ * @LastEditors: reel
+ * @LastEditTime: 2023-10-04 23:06:53
+ * @Description: 请填写简介
+-->
 <template>
 	<el-main>
 		<el-row :gutter="15">
@@ -8,7 +15,7 @@
 			</el-col>
 			<el-col :lg="8">
 				<el-card shadow="never" header="带Logo">
-					<sc-qr-code text="scui" logo="/img/logo.png"></sc-qr-code>
+					<sc-qr-code text="scui" logo="/website/img/logo.png"></sc-qr-code>
 				</el-card>
 			</el-col>
 			<el-col :lg="8">
