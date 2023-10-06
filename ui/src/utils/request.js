@@ -35,7 +35,7 @@ axios.interceptors.response.use(
 		var token = response.headers.get("X-Csrf-Token")
 		if(response.data.errno == 0 && token.length>0){
 			tool.cookie.set("TOKEN", token, {
-				expires: 30*60
+				expires: sysConfig.TOKEN_EXPIRED_TIME
 			})
 		}
 		if (response.data.errno ==0 ){

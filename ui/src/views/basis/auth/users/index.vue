@@ -15,6 +15,7 @@
 					<div class="left-panel">
 						<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
 						<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_set_company">分配公司</el-button>
 						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
 						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
@@ -37,8 +38,9 @@
 						
 						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
-						<el-table-column label="邮箱" prop="email" width="200" sortable='custom'></el-table-column>
-						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatRoles"></el-table-column>
+						<el-table-column label="邮箱" prop="email" width="150" sortable='custom'></el-table-column>
+						<el-table-column label="所属公司" prop="company" width="200" sortable='custom' :formatter="formatter" ></el-table-column>
+						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatter"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
 								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -66,24 +68,28 @@
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
 	<role-dialog v-if="dialog.role" ref="roleDialog" @success="handleSuccess" @closed="dialog.role=false"></role-dialog>
+	<company-dialog v-if="dialog.company" ref="companyDialog" @success="handleSuccess" @closed="dialog.company=false"></company-dialog>
 
 </template>
 
 <script>
 	import saveDialog from './save'
 	import roleDialog from './role'
+	import companyDialog from './company'
 
 	export default {
 		name: 'user',
 		components: {
 			saveDialog,
 			roleDialog,
+			companyDialog
 		},
 		data() {
 			return {
 				dialog: {
 					save: false,
 					role: false,
+					company: false,
 				},
 				showGrouploading: false,
 				groupFilterText: '',
@@ -93,13 +99,11 @@
 				search: {
 					nick_name: null
 				},
-				roles:[],
-				auth:{
-					put: '',
-					post: '',
-					get: '',
-					delete: '',
-				}
+				formatData:{
+					role:{},
+					company:{},
+				},
+				auth:{}
 			}
 		},
 		watch: {
@@ -108,9 +112,10 @@
 			}
 		},
 		mounted() {
-			this.getGroup()
-			this.getRoles()
 			this.getUiPermission()
+			// this.getGroup()
+			this.getRoles()
+			this.getCompanies()
 		},
 		methods: {
 			
@@ -131,7 +136,7 @@
 			},
 			//查看
 			table_show(row){
-				console.log(row)
+				// console.log(row)
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)
@@ -189,6 +194,13 @@
 					this.$refs.roleDialog.open(this.select_id())
 				})
 			},
+			async batch_set_company(){
+				this.dialog.company = true
+				this.$nextTick(() => {
+					// 把选择的id传个role组件
+					this.$refs.companyDialog.open(this.select_id())
+				})
+			},
 			//表格选择后回调事件
 			selectionChange(selection){
 				this.selection = selection;
@@ -243,20 +255,28 @@
 			},
 
 			async getRoles(){
-				var res = await this.$API.basis_auth.roles.list();
-				this.roles = res.details.rows;
+				var res = await this.$API.common.dimension.get({dim_type:"role"});
+				res.details.forEach(item=>{
+					this.formatData.role[item.code] =item.name
+				})
 			},
-			formatRoles(row,column){
+			async getCompanies(){
+				var res = await this.$API.common.dimension.get({dim_type:"company"});
+				res.details.forEach(item=>{
+					this.formatData.company[item.code] =item.name
+				})
+			},
+			formatter(row,column,cols){
+				var key = column.property
 				var data = []
-				var roles = row[column.property]
-				if (!roles){
+				var filterData = this.formatData[key]
+				if (!cols || !filterData){
 					return 
 				}
-				roles.forEach(item =>{
-					var index = item
-					var role = this.roles.filter(item => item.code == index)[0]
-					if (role){
-						data.unshift(role.label)
+				cols.forEach(item =>{
+					var dim = filterData[item]
+					if (dim){
+						data.unshift(dim)
 					}
 					
 				})
@@ -266,6 +286,7 @@
 				var path = this.$router.currentRoute.value.fullPath
 				var res = await this.$API.common.uiPermissions.get({path:path})
 				this.auth = res.details
+
 			},
 		}
 	}

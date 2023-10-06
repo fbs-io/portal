@@ -40,6 +40,11 @@
 			<!-- <el-form-item label="所属部门" prop="dept">
 				<el-cascader v-model="form.dept" :options="depts" :props="deptsProps" clearable style="width: 100%;"></el-cascader>
 			</el-form-item> -->
+			<el-form-item label="所属公司" prop="company">
+				<el-select v-model="form.company" multiple filterable style="width: 100%">
+					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code"/>
+				</el-select>
+			</el-form-item>
 			<el-form-item label="所属角色" prop="role">
 				<el-select v-model="form.role" multiple filterable style="width: 100%">
 					<el-option v-for="item in roles" :key="item.code" :label="item.label" :value="item.code"/>
@@ -76,6 +81,7 @@
 					nick_name: "",
 					dept: "",
 					role: [],
+					company: [],
 					super:"N",
 					password:"",
 				},
@@ -117,9 +123,15 @@
 					]
 				},
 				//所需数据选项
+				companies: [],
+				companiesProps: {
+					value: "company_code",
+					multiple: true,
+					checkStrictly: true
+				},
 				roles: [],
 				rolesProps: {
-					value: "id",
+					value: "code",
 					multiple: true,
 					checkStrictly: true
 				},
@@ -151,7 +163,8 @@
 			}
 		},
 		mounted() {
-			this.getRoles()
+			
+
 			// this.getDept()
 		},
 		methods: {
@@ -159,12 +172,22 @@
 			open(mode='add'){
 				this.mode = mode;
 				this.visible = true;
+				
+				if (this.mode!="show"){
+					console.log(mode)
+				this.getRoles()
+				this.getCompanies()
+				}
 				return this
 			},
 			//加载树数据
 			async getRoles(){
-				var res = await this.$API.basis_auth.roles.list();
+				var res = await this.$API.basis_auth.roles.list({page_num:-1,page_size:-1});
 				this.roles = res.details.rows;
+			},
+			async getCompanies(){
+				var res = await this.$API.basis_org.company.list({page_num:-1,page_size:-1});
+				this.companies = res.details.rows;
 			},
 			async getDept(){
 				// var res = await this.$API.system.dept.list.get();
@@ -190,6 +213,7 @@
 										nick_name: "",
 										dept: "",
 										role: [],
+										company:[],
 										super:"N"
 									}
 								}else{
@@ -203,6 +227,7 @@
 								avatar: this.form.avatar,
 								nick_name: this.form.nick_name,
 								dept: this.form.dept,
+								company: this.form.company,
 								role: this.form.role,
 								super: this.form.super,
 							}

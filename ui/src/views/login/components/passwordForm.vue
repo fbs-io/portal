@@ -2,13 +2,13 @@
  * @Author: reel
  * @Date: 2023-06-04 15:27:47
  * @LastEditors: reel
- * @LastEditTime: 2023-08-31 06:42:01
+ * @LastEditTime: 2023-10-06 09:23:52
  * @Description: 登陆组件
 -->
 <template>
 	<el-form ref="loginForm" :model="form" :rules="rules" label-width="0" size="large">
 		<el-form-item prop="user">
-			<el-input v-model="form.user" prefix-icon="el-icon-user" clearable :placeholder="$t('login.userPlaceholder')">
+			<el-input v-model="form.user" prefix-icon="el-icon-user" @mouseleave="mouseLeave" clearable :placeholder="$t('login.userPlaceholder')">
 			</el-input>
 		</el-form-item>
 		<el-form-item prop="password">
@@ -60,7 +60,7 @@
 				var res = await this.$API.basis_auth.token.post(data)
 				if(res.errno == 0){
 					this.$TOOL.cookie.set("TOKEN", res.details.token, {
-						expires: this.form.autologin? 30*60 : 0
+						expires: this.form.autologin? this.$CONFIG.TOKEN_EXPIRED_TIME : 0
 					})
 					this.$TOOL.data.set("USER_INFO", res.details.userInfo)
 					if (res.details.menu.length==0){
@@ -86,6 +86,9 @@
 				// this.$message.success("Login Success 登录成功")
 				this.islogin = false
 			},
+			async mouseLeave(){
+				
+			}
 		}
 	}
 </script>

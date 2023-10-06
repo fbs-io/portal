@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-10-05 00:15:55
+ * @LastEditTime: 2023-10-05 21:12:57
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"portal/app/basis"
-	ui "portal/ui/dist"
+	"portal/ui/dist"
 
 	"github.com/fbs-io/core"
 	"github.com/gin-gonic/gin"
@@ -20,10 +20,7 @@ import (
 func New(c core.Core) {
 	// 中间件使用
 	core.STATIC_PATH_PREFIX = "/website/"
-	// c.Engine().GET(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
-	// 	staticSrv := http.FileServer(http.FS(ui.Static))
-	// 	staticSrv.ServeHTTP(ctx.Writer, ctx.Request)
-	// })
+
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", "/"))
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", ""))
 
@@ -37,24 +34,27 @@ func New(c core.Core) {
 	// 权限校验
 
 	// 加载静态资源
-	// static, _ := fs.Sub(ui.Static, core.STATIC_PATH_PREFIX)
-	// c.Engine().StaticFS("/website", http.FS(static))
 	c.Engine().GET(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
-		staticSrv := http.FileServer(http.FS(ui.Static))
+		staticSrv := http.FileServer(http.FS(dist.Static))
 		staticSrv.ServeHTTP(ctx.Writer, ctx.Request)
 	})
-	// fs := http.FileServer(http.FS(ui.Static))
 	c.Engine().GET("/", func(ctx *gin.Context) {
 		ctx.Header("Content-Type", "text/html;charset=utf-8")
-		ctx.String(200, string(ui.Index))
+		ctx.String(200, string(dist.Index))
 	})
-	// http.Handle("/", http.StripPrefix("/", fs))
+
+	c.Engine().NoRoute(func(ctx *gin.Context) {
+		ctx.Header("Content-Type", "text/html;charset=utf-8")
+		ctx.String(200, string(dist.Index))
+		ctx.Writer.Flush()
+	})
 	// 加载
 	ajax := c.Group("ajax").WithPermission(core.SOURCE_TYPE_LIMITED)
 	{
 		_ = ajax.Group("home", "首页").WithPermission(core.SOURCE_TYPE_UNMENU).WithMeta("icon", "el-icon-help-filled")
 
 		ajax.GET("uipermission", "页面权限", uiPermissionParams{}, uiPermission()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
+		ajax.GET("dimension", "维度列表", dimensionParams{}, dimList()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
 	}
 
 	// 初始化basis模块

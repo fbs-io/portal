@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 21:26:33
  * @LastEditors: reel
- * @LastEditTime: 2023-09-30 12:06:52
+ * @LastEditTime: 2023-10-06 09:31:44
  * @Description: 请填写简介
  */
 package org
@@ -18,7 +18,7 @@ func New(route core.RouterGroup) {
 	tx.Register(&Company{})
 
 	// 公司code生成器
-	companySeq := sequence.New(route.Core(), "org_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
+	companySeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
 
 	orgGroup := route.Group("org", "组织管理").WithMeta("icon", "sc-icon-organization")
 

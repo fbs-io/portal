@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:27
  * @LastEditors: reel
- * @LastEditTime: 2023-09-18 19:42:19
+ * @LastEditTime: 2023-10-06 09:32:14
  * @Description: 请填写简介
  */
 package auth
@@ -11,11 +11,11 @@ import (
 	"portal/pkg/consts"
 
 	"github.com/fbs-io/core/store/rdb"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Role struct {
+	CompanyCode string           `gorm:"index"`
 	Code        string           `gorm:"comment:code;unique" json:"code"`
 	Label       string           `gorm:"comment:角色;unique" json:"label"`
 	Sort        int              `gorm:"comment:排序" json:"sort"`
@@ -30,7 +30,6 @@ func (r *Role) TableName() string {
 
 // gorm 中间件操作
 func (r *Role) BeforeCreate(tx *gorm.DB) error {
-	r.Code = uuid.New().String()
 	r.Model.BeforeCreate(tx)
 	return nil
 }

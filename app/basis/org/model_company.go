@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 20:14:52
  * @LastEditors: reel
- * @LastEditTime: 2023-09-29 22:56:13
+ * @LastEditTime: 2023-10-05 21:04:15
  * @Description: 组织管理
  */
 package org
@@ -24,7 +24,7 @@ type Company struct {
 }
 
 func (o *Company) TableName() string {
-	return consts.TABLE_BASIS_ORG
+	return consts.TABLE_BASIS_ORG_COMPANY
 }
 
 func (o *Company) BeforeCreate(tx *gorm.DB) error {

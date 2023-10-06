@@ -2,10 +2,10 @@
  * @Author: reel
  * @Date: 2023-10-05 00:17:15
  * @LastEditors: reel
- * @LastEditTime: 2023-10-05 00:17:16
+ * @LastEditTime: 2023-10-05 06:23:38
  * @Description: 请填写简介
  */
-package ui
+package dist
 
 import "embed"
 

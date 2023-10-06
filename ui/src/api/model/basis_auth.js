@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 17:10:55
+ * @LastEditTime: 2023-10-06 07:59:39
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -24,17 +24,24 @@ export default {
 		update: {
 			url: `${config.API_URL}/basis/auth/user/update`,
 			name: "修改用户信息",
-			put: async function(data={}){
-				return await http.put(this.url, data);
+			post: async function(data={}){
+				return await http.post(this.url, data);
 			}
 		},
 		chPwd: {
 			url: `${config.API_URL}/basis/auth/user/chpwd`,
 			name: "修改用户密码",
-			put: async function(data={}){
-				return await http.put(this.url, data);
+			post: async function(data={}){
+				return await http.post(this.url, data);
 			}
 		},
+		getCompany:{
+			url: `${config.API_URL}/basis/auth/user/company`,
+			name: "获取用户的公司列表",
+			get:async function(data={}){
+				return await http.put(this.url, data);
+			}
+		}
 
 	}, 
 

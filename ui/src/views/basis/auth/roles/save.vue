@@ -18,7 +18,7 @@
 				</el-form>
 			</el-tab-pane>
 			<el-tab-pane label="菜单权限">
-				<div class="treeMain">
+				<div class="treeMain" >
 					<el-tree ref="menu" node-key="code" :data="menu.list" :props="menu.props" show-checkbox></el-tree>
 				</div>
 			</el-tab-pane>
@@ -61,7 +61,7 @@
 		</el-tabs>
 		<template #footer>
 			<el-button @click="visible=false" >取 消</el-button>
-			<el-button type="primary" :loading="isSaveing" @click="submit(false)">保 存</el-button>
+			<el-button type="primary" v-if="mode!='show'" :loading="isSaveing" @click="submit(false)">保 存</el-button>
 			<el-button v-if="mode=='add'" type="primary" :loading="isSaveing" @click="submit(true)">保存并继续</el-button>
 		</template>
 	</el-dialog>

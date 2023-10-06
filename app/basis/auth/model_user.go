@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-09-18 19:41:44
+ * @LastEditTime: 2023-10-06 07:56:33
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -25,6 +25,7 @@ type User struct {
 	IP          string           `gorm:"comment:登陆IP"`
 	Super       string           `gorm:"comment:是否超管, Y表示是, N表示否;default:N"`
 	Role        rdb.ModeListJson `gorm:"comment:角色;type:varchar(1000)"`
+	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
 	UUID        string           `gorm:"comment:uuid"`
 	Permissions map[string]bool  `gorm:"-" json:"permission"` // 权限校验
 	rdb.Model
@@ -39,7 +40,8 @@ type UserList struct {
 	Super     string           `json:"super"`
 	CreatedAt uint64           `json:"created_at"`
 	Status    int8             `json:"status"`
-	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)"`
+	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(10240)"`
+	Company   rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
 }
 
 func (u *User) TableName() string {
@@ -107,13 +109,3 @@ func (user *User) chpwd(param *userChPwdParams) (err error) {
 	user.Password = param.NewPwd
 	return
 }
-
-// // 用户更新
-// func (user *User) update(tx *gorm.DB, param *userUpdateParams) (err error) {
-// 	user.NickName = param.NickName
-// 	user.Email = param.Email
-// 	user.Role = param.Role
-// 	user.ID = param.ID
-// 	user.Status = param.Status
-// 	return tx.Updates(user).Error
-// }

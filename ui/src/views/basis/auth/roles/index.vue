@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 21:28:39
+ * @LastEditTime: 2023-10-06 09:08:37
  * @Description: 角色管理
 -->
 <template>
@@ -39,8 +39,8 @@
 				<el-table-column label="操作" fixed="right" align="right" width="170">
 					<template #default="scope">
 						<el-button-group>
-							<el-button text type="primary"  v-auth="permissions.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-							<el-button text type="primary"  v-auth="permissions.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+							<el-button text type="primary"  v-auth="auth.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
+							<el-button text type="primary"  v-auth="auth.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
 									<el-button text type="primary"  v-auth="auth.delete"  size="small">删除</el-button>
@@ -84,12 +84,7 @@
 				search: {
 					company_name: null
 				},
-				auth:{
-					put: '',
-					post: '',
-					get: '',
-					delete: '',
-				}
+				auth:{}
 			}
 		},
 		watch: {

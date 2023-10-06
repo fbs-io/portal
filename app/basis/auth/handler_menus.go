@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:47:39
+ * @LastEditTime: 2023-10-06 07:43:39
  * @Description: 菜单相关api逻辑
  */
 package auth
@@ -82,7 +82,7 @@ func menusAdd() core.HandlerFunc {
 // 菜单查询, 返回树表结构
 func menusQueryWithManager() core.HandlerFunc {
 	return func(ctx core.Context) {
-		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), QUERY_MENU_MODE_MANAGE)
+		menus, _, err := getMenuTree(ctx.Core().RDB(), ctx.Auth(), QUERY_MENU_MODE_MANAGE)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return

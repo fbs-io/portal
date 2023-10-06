@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 15:48:53
+ * @LastEditTime: 2023-10-06 07:59:12
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -16,41 +16,11 @@ export default {
 			return http.get(this.url, data, config);
 		}
 	},
-	// uploadFile: {
-	// 	url: `${config.API_URL}/uploadFile`,
-	// 	name: "附件上传",
-	// 	post: async function(data, config={}){
-	// 		return await http.post(this.url, data, config);
-	// 	}
-	// },
-	// exportFile: {
-	// 	url: `${config.API_URL}/fileExport`,
-	// 	name: "导出附件",
-	// 	get: async function(data, config={}){
-	// 		return await http.get(this.url, data, config);
-	// 	}
-	// },
-	// importFile: {
-	// 	url: `${config.API_URL}/fileImport`,
-	// 	name: "导入附件",
-	// 	post: async function(data, config={}){
-	// 		return await http.post(this.url, data, config);
-	// 	}
-	// },
-	// file: {
-	// 	menu: {
-	// 		url: `${config.API_URL}/file/menu`,
-	// 		name: "获取文件分类",
-	// 		get: async function(){
-	// 			return await http.get(this.url);
-	// 		}
-	// 	},
-	// 	list: {
-	// 		url: `${config.API_URL}/file/list`,
-	// 		name: "获取文件列表",
-	// 		get: async function(params){
-	// 			return await http.get(this.url, params);
-	// 		}
-	// 	}
-	// }
+	dimension: {
+		url: `${config.API_URL}/dimension`,
+		name: "维度列表",
+		get: async function(data, config={}){
+			return await http.get(this.url, data, config);
+		}
+	},
 }

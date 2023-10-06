@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 21:48:26
+ * @LastEditTime: 2023-10-06 09:09:13
  * @Description: 权限校验中间件
  */
 package app
@@ -16,6 +16,10 @@ import (
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/gin-gonic/gin"
 )
+
+func genPermissionKey(ctx *gin.Context) string {
+	return fmt.Sprintf("%s%s", strings.ToLower(ctx.Request.Method), strings.ReplaceAll(ctx.FullPath(), "/", ":"))
+}
 
 func permissionMiddleware(c core.Core) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -34,8 +38,8 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 			return
 		}
 		account := accountI.(string)
-		user := auth.GetUser(account, c.RDB().DB())
-		permissionKey := fmt.Sprintf("%s%s", strings.ToLower(ctx.Request.Method), strings.ReplaceAll(ctx.FullPath(), "/", ":"))
+		user := auth.GetUser(account, c.RDB())
+		permissionKey := genPermissionKey(ctx)
 		if user.Permissions[permissionKey] {
 			ctx.Next()
 			return

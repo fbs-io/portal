@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-31 06:44:55
+ * @LastEditTime: 2023-10-06 08:00:19
  * @Description: 请填写简介
 -->
 <template>
@@ -73,7 +73,7 @@
 							new_pwd: this.form.newPassword,
 							new_pwd2: this.form.confirmNewPassword
 					}
-				var res = await this.$API.basis_auth.user.chPwd.put(data)
+				var res = await this.$API.basis_auth.user.chPwd.post(data)
 					if(res.errno == 0){
 							this.$alert("密码修改成功，是否跳转至登录页使用新密码登录", "修改成功", {
 								type: 'success',

@@ -1,3 +1,10 @@
+/*
+ * @Author: reel
+ * @Date: 2023-07-30 22:36:55
+ * @LastEditors: reel
+ * @LastEditTime: 2023-10-06 07:58:32
+ * @Description: 按钮权限校验
+ */
 import tool from '@/utils/tool';
 
 export function permission(data) {
@@ -5,7 +12,7 @@ export function permission(data) {
 	if(!permissions){
 		return false;
 	}
-	let isHave = permissions.includes(data);
+	let isHave = permissions[data];
 	return isHave;
 }
 

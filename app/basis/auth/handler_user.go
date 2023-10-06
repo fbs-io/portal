@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-09-05 19:00:15
+ * @LastEditTime: 2023-10-06 07:55:27
  * @Description: 用户信息相关接口
  */
 package auth
@@ -88,6 +88,7 @@ type userAddParams struct {
 	NickName string           `json:"nick_name"`
 	Email    string           `json:"email" binding:"omitempty,email"`
 	Super    string           `json:"super"`
+	Company  rdb.ModeListJson `json:"company"`
 	Role     rdb.ModeListJson `json:"role"`
 }
 
@@ -102,6 +103,7 @@ func userAdd() core.HandlerFunc {
 			Email:    param.Email,
 			Super:    param.Super,
 			Role:     param.Role,
+			Company:  param.Company,
 		}
 		err := tx.Create(user).Error
 		if err != nil {
@@ -165,7 +167,7 @@ func usersQuery() core.HandlerFunc {
 		)
 		users := make([]*UserList, 0, 100)
 
-		err := tx.Model(um).Find(&users).Error
+		err := tx.Model(um).Order("id").Find(&users).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
@@ -180,14 +182,6 @@ func usersQuery() core.HandlerFunc {
 			"rows":      users,
 		}
 
-		// for _, user := range users {
-		// 	roleList := make([]interface{}, 0, 100)
-		// 	for _, role := range user.Role {
-		// 		r := GetRole(uint(role.(float64)), ctx.Core().RDB().DB())
-		// 		roleList = append(roleList, r.Label)
-		// 	}
-		// 	user.Role = roleList
-		// }
 		ctx.JSON(errno.ERRNO_OK.WrapData(data))
 	}
 }
@@ -200,6 +194,7 @@ type usersUpdateParams struct {
 	Status   int8             `json:"status" conditions:"-"`
 	Email    string           `json:"email" binding:"omitempty,email"`
 	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
+	Company  rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)" conditions:"-"`
 }
 
 func usersUpdate() core.HandlerFunc {
@@ -211,6 +206,7 @@ func usersUpdate() core.HandlerFunc {
 			Super:    param.Super,
 			Password: param.Pwd,
 			NickName: param.NickName,
+			Company:  param.Company,
 		}
 		user.Status = param.Status
 
