@@ -2,21 +2,21 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 09:08:37
+ * @LastEditTime: 2023-10-06 20:50:16
  * @Description: 角色管理
 -->
 <template>
 	<el-container>
 		<el-header>
 			<div class="left-panel">
-				<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
-				<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+				<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
+				<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
 				<!-- <el-button type="primary" plain :disabled="selection.length!=1" @click="permission">权限设置</el-button> -->
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
 					<el-input v-model="search.label" placeholder="角色名称" clearable></el-input>
-					<el-button type="primary"  v-auth="auth.get"  icon="el-icon-search" @click="upsearch"></el-button>
+					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
 			</div>
 		</el-header>
@@ -39,11 +39,11 @@
 				<el-table-column label="操作" fixed="right" align="right" width="170">
 					<template #default="scope">
 						<el-button-group>
-							<el-button text type="primary"  v-auth="auth.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-							<el-button text type="primary"  v-auth="auth.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+							<el-button text type="primary"  v-auth="auth?auth.get:auth" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
+							<el-button text type="primary"  v-auth="auth?auth.post:auth"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
-									<el-button text type="primary"  v-auth="auth.delete"  size="small">删除</el-button>
+									<el-button text type="primary"  v-auth="auth?auth.delete:auth"  size="small">删除</el-button>
 								</template>
 							</el-popconfirm>
 						</el-button-group>
@@ -84,7 +84,9 @@
 				search: {
 					company_name: null
 				},
-				auth:{}
+				auth:{
+					put:""
+				}
 			}
 		},
 		watch: {

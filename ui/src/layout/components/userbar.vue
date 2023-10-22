@@ -126,7 +126,7 @@
 			//个人信息
 			handleUser(command) {
 				if(command == "uc"){
-					this.$router.push({path: '/basis/user'});
+					this.$router.push({path: '/basis/auth/user'});
 				}
 				if(command == "cmd"){
 					this.$router.push({path: '/cmd'});

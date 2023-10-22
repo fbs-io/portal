@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 09:09:13
+ * @LastEditTime: 2023-10-19 06:23:30
  * @Description: 权限校验中间件
  */
 package app
@@ -10,6 +10,7 @@ package app
 import (
 	"fmt"
 	"portal/app/basis/auth"
+	"portal/pkg/consts"
 	"strings"
 
 	"github.com/fbs-io/core"
@@ -31,6 +32,7 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 			ctx.Next()
 			return
 		}
+
 		accountI, ok := ctx.Get(core.CTX_AUTH)
 		if !ok {
 			ctx.JSON(200, errno.ERRNO_AUTH_PERMISSION.ToMap())
@@ -38,7 +40,10 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 			return
 		}
 		account := accountI.(string)
-		user := auth.GetUser(account, c.RDB())
+		company := c.Cache().Get(consts.GenUserCompanyKey(account))
+		ctx.Set(core.CTX_SHARDING_KEY, company)
+		user := auth.GetUser(account, core.NewCtx(c, ctx), auth.REFRESH_NOT)
+		auth.SetUser(user.Account, user)
 		permissionKey := genPermissionKey(ctx)
 		if user.Permissions[permissionKey] {
 			ctx.Next()

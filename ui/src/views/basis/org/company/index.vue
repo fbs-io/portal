@@ -2,20 +2,20 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 21:23:47
+ * @LastEditTime: 2023-10-06 20:52:26
  * @Description: 请填写简介
 -->
 <template>
 	<el-container>
 		<el-header>
 			<div class="left-panel">
-				<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
-				<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+				<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
+				<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
 					<el-input v-model="search.company_name" placeholder="公司名称" clearable></el-input>
-					<el-button type="primary"  v-auth="auth.get"  icon="el-icon-search" @click="upsearch"></el-button>
+					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
 			</div>
 		</el-header>
@@ -41,10 +41,10 @@
 					<template #default="scope">
 						<el-button-group>
 							<!-- <el-button text type="primary"  v-auth="permissions.list" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button> -->
-							<el-button text type="primary"  v-auth="auth.post"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+							<el-button text type="primary"  v-auth="auth?auth.post:auth"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
-									<el-button text type="primary"  v-auth="auth.delete"  size="small">删除</el-button>
+									<el-button text type="primary"  v-auth="auth?auth.delete:auth"  size="small">删除</el-button>
 								</template>
 							</el-popconfirm>
 						</el-button-group>

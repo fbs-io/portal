@@ -2,15 +2,23 @@
  * @Author: reel
  * @Date: 2023-06-04 15:27:47
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 09:23:52
+ * @LastEditTime: 2023-10-17 20:22:21
  * @Description: 登陆组件
 -->
 <template>
 	<el-form ref="loginForm" :model="form" :rules="rules" label-width="0" size="large">
 		<el-form-item prop="user">
-			<el-input v-model="form.user" prefix-icon="el-icon-user" @mouseleave="mouseLeave" clearable :placeholder="$t('login.userPlaceholder')">
+			<el-input v-model="form.user" prefix-icon="el-icon-user" @mouseleave="mouseLeave"  :placeholder="$t('login.userPlaceholder')">
 			</el-input>
 		</el-form-item>
+		<el-form-item  prop="company" v-if="isCompany">
+				<el-select v-model="form.company" style="width: 100%" clearable>
+					<template #prefix>
+						<sc-icon-company style="width: 15;height: 15;"></sc-icon-company>
+					</template>
+					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code" />
+				</el-select>
+			</el-form-item>
 		<el-form-item prop="password">
 			<el-input v-model="form.password" prefix-icon="el-icon-lock" clearable show-password :placeholder="$t('login.PWPlaceholder')"></el-input>
 		</el-form-item>
@@ -27,6 +35,7 @@
 				form: {
 					user: "",
 					password: "",
+					company:"",
 					autologin: true
 				},
 				rules: {
@@ -38,6 +47,8 @@
 					]
 				},
 				islogin: false,
+				companies:[],
+				isCompany:false
 			}
 		},
 		watch:{
@@ -54,7 +65,8 @@
 				this.islogin = true
 				var data = {
 					account: this.form.user,
-					password: this.form.password
+					password: this.form.password,
+					company_code: this.form.company
 				}
 				//获取token
 				var res = await this.$API.basis_auth.token.post(data)
@@ -87,7 +99,14 @@
 				this.islogin = false
 			},
 			async mouseLeave(){
-				
+				var res = await this.$API.basis_auth.user.getCompany.get({account:this.form.user})
+				console.log(res.details)
+				if (res.details.companies && res.details.companies.length>1){
+					this.isCompany = true
+				}else{
+					this.isCompany = false
+				}
+				this.companies = res.details.companies
 			}
 		}
 	}

@@ -84,6 +84,7 @@
 					company: [],
 					super:"N",
 					password:"",
+					email:"",
 				},
 				//验证规则
 				rules: {
@@ -174,9 +175,8 @@
 				this.visible = true;
 				
 				if (this.mode!="show"){
-					console.log(mode)
-				this.getRoles()
-				this.getCompanies()
+					this.getRoles()
+					this.getCompanies()
 				}
 				return this
 			},
@@ -214,7 +214,8 @@
 										dept: "",
 										role: [],
 										company:[],
-										super:"N"
+										super:"N",
+										email:"",
 									}
 								}else{
 									this.visible = false;
@@ -230,6 +231,7 @@
 								company: this.form.company,
 								role: this.form.role,
 								super: this.form.super,
+								email: this.form.email,
 							}
 							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;

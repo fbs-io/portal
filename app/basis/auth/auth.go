@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 09:56:38
+ * @LastEditTime: 2023-10-20 06:15:08
  * @Description: 请填写简介
  */
 package auth
@@ -13,7 +13,6 @@ import (
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/env"
-	"github.com/fbs-io/core/store/rdb"
 	"gorm.io/gorm"
 )
 
@@ -23,24 +22,56 @@ var (
 	lock    = &sync.RWMutex{}
 )
 
+const (
+
+	// 用户缓存刷新方式
+	// 不刷新
+	REFRESH_NOT int8 = iota
+	// 刷新user
+	REFRESH_USRE
+	// 刷新user和菜单
+	REFRESH_ALL
+)
+
 func SetUser(auth string, user *User) {
 	lock.Lock()
 	defer lock.Unlock()
 	userMap[auth] = user
 }
 
-func GetUser(auth string, db rdb.Store) (user *User) {
+func GetUser(auth string, ctx core.Context, refresh int8) (user *User) {
 	lock.RLock()
 	defer lock.RUnlock()
 	user = userMap[auth]
+	if refresh == REFRESH_NOT {
+		if user == nil {
+			user = &User{Account: auth}
+			err := ctx.NewTX().Model(user).Where("account = (?)", auth).Find(user).Error
+			if err != nil {
+				return nil
+			}
+			user.Menu, user.Permissions, _ = getMenuTree(ctx, auth, QUERY_MENU_MODE_INFO)
+		}
+	}
+
+	if refresh >= REFRESH_USRE {
+		user = nil
+	}
 	if user == nil {
 		user = &User{Account: auth}
-		err := db.DB().Model(user).Find(user).Error
+		err := ctx.NewTX().Model(user).Where("account = (?)", auth).Find(user).Error
 		if err != nil {
 			return nil
 		}
-		_, user.Permissions, _ = getMenuTree(db, auth, QUERY_MENU_MODE_INFO)
-		userMap[auth] = user
+
+		// 继续判断是否有分区code, 如果无法从上下文获取code
+		// 则尝试使用用户自带公司列表的第一个值作为公司code用于分区传递给上下文
+		if ctx.CtxGet(core.CTX_SHARDING_KEY) == nil && user.Company != nil && len(user.Company) > 0 {
+			ctx.CtxSet(core.CTX_SHARDING_KEY, user.Company[0].(string))
+		}
+		if refresh == REFRESH_ALL || user.Permissions == nil {
+			user.Menu, user.Permissions, _ = getMenuTree(ctx, auth, QUERY_MENU_MODE_INFO)
+		}
 	}
 	return
 }
@@ -78,20 +109,9 @@ func New(route core.RouterGroup) {
 			Super:    "Y",
 		}).Error
 	})
-	role := &Role{}
-	tx.Register(role)
-	// tx.Register(role, func() error {
-	// 	tx.DB().Use(sharding.Register(sharding.Config{
-	// 		ShardingKey:           "company_id",
-	// 		PrimaryKeyGenerator:   sharding.PKCustom,
-	// 		PrimaryKeyGeneratorFn: func(tableIdx int64) int64 { return 0 },
-	// 		ShardingAlgorithm: func(columnValue any) (suffix string, err error) {
-	// 			suffix, _ = columnValue.(string)
-	// 			return suffix, nil
-	// 		},
-	// 	}, role.TableName()))
-	// 	return nil
-	// })
+	r := &Role{}
+	// tx.Register(r).AddShardingTable(r.TableName())
+	tx.Register(r)
 
 	auth := route.Group("auth", "用户中心").WithMeta("icon", "el-icon-stamp")
 	// 用户个人信息操作
@@ -104,10 +124,14 @@ func New(route core.RouterGroup) {
 		info.POST("login", "登陆", loginParams{}, login()).WithAllowSignature()
 		// 登陆前获取用户的公司列表
 		info.GET("company", "获取公司列表", userCompanyParams{}, getCompany()).WithAllowSignature().WithPermission(core.SOURCE_TYPE_UNLIMITED)
+		// 登陆后获取用户的公司列表
+		info.GET("allowcompany", "获取公司列表", userCompanyParams{}, getCompany()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
 		// 个人账户更改密码不受限
 		info.POST("chpwd", "变更密码", userChPwdParams{}, chpwd()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 		// 个人用户修改信息不受限
 		info.POST("update", "更新账户", userUpdateParams{}, userUpdate()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
+		// 设置/切换公司
+		info.POST("default_company", "更新账户", setDefaultCompanyParams{}, setDefaultCompany()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 	}
 
 	// 用户列表管理, 用于批量管理用户

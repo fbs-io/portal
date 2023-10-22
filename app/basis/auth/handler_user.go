@@ -2,14 +2,12 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 07:55:27
+ * @LastEditTime: 2023-10-15 19:28:00
  * @Description: 用户信息相关接口
  */
 package auth
 
 import (
-	"time"
-
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/store/rdb"
@@ -192,7 +190,7 @@ type usersUpdateParams struct {
 	Pwd      string           `json:"password" conditions:"-"`
 	Super    string           `json:"super" conditions:"-"`
 	Status   int8             `json:"status" conditions:"-"`
-	Email    string           `json:"email" binding:"omitempty,email"`
+	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
 	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
 	Company  rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)" conditions:"-"`
 }
@@ -207,6 +205,7 @@ func usersUpdate() core.HandlerFunc {
 			Password: param.Pwd,
 			NickName: param.NickName,
 			Company:  param.Company,
+			Email:    param.Email,
 		}
 		user.Status = param.Status
 
@@ -230,10 +229,7 @@ func usersDelete() core.HandlerFunc {
 		tx := ctx.TX()
 
 		user := &User{}
-		user.DeletedBy = ctx.Auth()
-		user.DeletedAT = uint(time.Now().Unix())
-
-		err := tx.Model(user).Where("id in (?)", param.ID).Updates(user).Error
+		err := tx.Model(user).Where("id in (?)", param.ID).Delete(user).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return

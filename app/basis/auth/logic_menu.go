@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 07:56:30
+ * @LastEditTime: 2023-10-20 06:14:42
  * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
@@ -39,7 +39,7 @@ type menuTree struct {
 }
 
 // TODO: 增加角色判断
-func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
+func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
 	source := &core.Sources{}
 
 	// 构筑条件
@@ -50,7 +50,7 @@ func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissi
 	// TODO: 通过缓存/视图的方式, 减少数据库查询次数
 	// 获取用户
 	user := &User{}
-	err = db.DB().Where("account = (?)", account).Find(user).Error
+	err = ctx.NewTX().Where("account = (?)", account).Find(user).Error
 	if err != nil {
 		return
 	}
@@ -62,7 +62,9 @@ func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissi
 		for _, roleCode := range user.Role {
 			userRoles = append(userRoles, roleCode.(string))
 		}
-		err = db.DB().Where("code in (?) ", userRoles).Find(&roles).Error
+		// 设置把分区字段放入上下文,
+		// 用户登陆逻辑复杂, 本处特别处理
+		err = ctx.NewTX().Where("code in (?) ", userRoles).Find(&roles).Error
 		if err != nil {
 			return
 		}
@@ -97,12 +99,11 @@ func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissi
 	permissions = make(map[string]bool, 100)
 	// 通过角色关联权限和菜单
 	menuList := make([]*core.Sources, 0, 1000)
-	tx := db.BuildQuery(cond).Offset(-1).Limit(-1)
+	tx := ctx.Core().RDB().BuildQuery(cond).Offset(-1).Limit(-1)
 	err = tx.Find(&menuList).Error
 	if err != nil {
 		return
 	}
-
 	// 构筑树表需要的变量
 	menuMap := make(map[int8]map[string]*menuTree, 100)
 	tree = make([]*menuTree, 0, 100)
@@ -137,7 +138,7 @@ func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissi
 			menuMap[m.Level] = make(map[string]*menuTree)
 		}
 		menuMap[m.Level][m.Code] = mTree
-		if m.Level == level {
+		if m.Level == level && m.IsRouter == core.SOURCE_ROUTER_IS {
 			tree = append(tree, mTree)
 		} else {
 			pt := menuMap[m.Level-1][m.PCode]
@@ -146,10 +147,13 @@ func getMenuTree(db rdb.Store, account, mode string) (tree []*menuTree, permissi
 			} else {
 				if mTree.IsRouter == core.SOURCE_ROUTER_IS && mTree.Type == core.SOURCE_TYPE_UNMENU {
 					allowTree = append(allowTree, mTree)
+				} else {
+
 				}
 			}
 		}
 	}
 	tree = append(tree, allowTree...)
+
 	return
 }

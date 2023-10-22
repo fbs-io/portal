@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-10-05 21:12:57
+ * @LastEditTime: 2023-10-17 07:30:01
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -14,10 +14,21 @@ import (
 	"portal/ui/dist"
 
 	"github.com/fbs-io/core"
+	"github.com/fbs-io/core/store/rdb"
 	"github.com/gin-gonic/gin"
 )
 
 func New(c core.Core) {
+	// 使用数据分区模式
+	c.RDB().AddMigrateList(func() error {
+		res, _ := queryDimList(c.RDB().DB(), DIM_TYPE_COMPANY)
+		suffixList := make([]interface{}, 0, len(res))
+		for _, item := range res {
+			suffixList = append(suffixList, item.Code)
+		}
+		c.RDB().SetShardingModel(rdb.SHADING_MODEL_TABLE, suffixList)
+		return nil
+	})
 	// 中间件使用
 	core.STATIC_PATH_PREFIX = "/website/"
 
@@ -59,5 +70,4 @@ func New(c core.Core) {
 
 	// 初始化basis模块
 	basis.New(ajax)
-
 }

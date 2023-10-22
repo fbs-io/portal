@@ -13,16 +13,16 @@
 		<el-container>
 				<el-header>
 					<div class="left-panel">
-						<el-button type="primary" v-auth="auth.put" icon="el-icon-plus" @click="add"></el-button>
-						<el-button type="danger" v-auth="auth.delete" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_set_company">分配公司</el-button>
-						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
-						<el-button type="primary" v-auth="auth.post" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
+						<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
+						<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+						<el-button type="primary" v-auth="auth?auth.post:auth" plain :disabled="selection.length==0" @click="batch_set_company">分配公司</el-button>
+						<el-button type="primary" v-auth="auth?auth.post:auth" plain :disabled="selection.length==0" @click="batch_set_role">分配角色</el-button>
+						<el-button type="primary" v-auth="auth?auth.post:auth" plain :disabled="selection.length==0" @click="batch_reset_pwd">密码重置</el-button>
 					</div>
 					<div class="right-panel">
 						<div class="right-panel-search">
 							<el-input v-model="search.nick_name" placeholder="姓名" clearable></el-input>
-							<el-button type="primary" v-auth="auth.get" icon="el-icon-search" @click="upsearch"></el-button>
+							<el-button type="primary" v-auth="auth?auth.get:auth" icon="el-icon-search" @click="upsearch"></el-button>
 						</div>
 					</div>
 				</el-header>
@@ -50,11 +50,11 @@
 						<el-table-column label="操作" fixed="right" align="right" width="180">
 							<template #default="scope">
 								<el-button-group>
-									<el-button text type="primary" v-auth="auth.get" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
-									<el-button text type="primary" v-auth="auth.post" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+									<el-button text type="primary" v-auth="auth?auth.get:auth" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
+									<el-button text type="primary" v-auth="auth?auth.post:auth" size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 									<el-popconfirm title="确定删除吗？" @confirm="table_del(scope.row, scope.$index)">
 										<template #reference>
-											<el-button  v-auth="auth.delete" text type="primary" size="small">删除</el-button>
+											<el-button  v-auth="auth?auth.delete:auth" text type="primary" size="small">删除</el-button>
 										</template>
 									</el-popconfirm>
 								</el-button-group>
@@ -112,14 +112,15 @@
 			}
 		},
 		mounted() {
-			this.getUiPermission()
-			// this.getGroup()
-			this.getRoles()
-			this.getCompanies()
+			setTimeout(()=>{
+				this.getUiPermission()
+				this.getRoles()
+				this.getCompanies()
+				// this.getGroup()
+
+			},500)
 		},
 		methods: {
-			
-
 			//添加
 			add(){
 				this.dialog.save = true
@@ -136,7 +137,6 @@
 			},
 			//查看
 			table_show(row){
-				// console.log(row)
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)

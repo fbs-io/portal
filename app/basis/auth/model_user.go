@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 07:56:33
+ * @LastEditTime: 2023-10-15 13:28:50
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -28,6 +28,7 @@ type User struct {
 	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
 	UUID        string           `gorm:"comment:uuid"`
 	Permissions map[string]bool  `gorm:"-" json:"permission"` // 权限校验
+	Menu        []*menuTree      `gorm:"-" json:"menu"`       // 菜单
 	rdb.Model
 }
 
@@ -53,20 +54,14 @@ func (u *User) TableName() string {
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	u.UUID = uuid.New().String()
-	u.Model.BeforeCreate(tx)
 	if u.Super == "" {
 		u.Super = "N"
 	}
 	return u.encodePwd()
 }
-func (u *User) BeforeUpdate(tx *gorm.DB) error {
-	u.Model.BeforeUpdate(tx)
-	return u.encodePwd()
-}
 
-func (u *User) BeforeDelete(tx *gorm.DB) error {
-	u.Model.BeforeDelete(tx)
-	return nil
+func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	return u.encodePwd()
 }
 
 // User模型相关操作

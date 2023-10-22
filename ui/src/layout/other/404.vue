@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-04 23:08:44
+ * @LastEditTime: 2023-10-19 07:40:41
  * @Description: 请填写简介
 -->
 <template>
@@ -24,7 +24,7 @@
 	export default {
 		methods: {
 			gohome(){
-				location.href="#/"
+				location.href="/"
 			},
 			goback(){
 				this.$router.go(-1);

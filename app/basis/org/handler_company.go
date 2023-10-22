@@ -2,14 +2,13 @@
  * @Author: reel
  * @Date: 2023-09-19 04:34:39
  * @LastEditors: reel
- * @LastEditTime: 2023-09-30 09:23:36
+ * @LastEditTime: 2023-10-15 23:12:22
  * @Description: 公司管理, 系统按公司别进行数据隔离
  */
 package org
 
 import (
 	"portal/pkg/sequence"
-	"time"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
@@ -47,6 +46,8 @@ func companyAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
 			return
 		}
+		// 创建公司相关的库或者表
+		ctx.Core().RDB().AddShardingSuffixs(company.CompanyCode)
 		ctx.JSON(errno.ERRNO_OK.Notify())
 	}
 }
@@ -128,10 +129,8 @@ func companyDelete() core.HandlerFunc {
 		tx := ctx.TX()
 
 		company := &Company{}
-		company.DeletedBy = ctx.Auth()
-		company.DeletedAT = uint(time.Now().Unix())
 
-		err := tx.Model(company).Where("id in (?)", param.ID).Updates(company).Error
+		err := tx.Model(company).Where("id in (?)", param.ID).Delete(company).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return

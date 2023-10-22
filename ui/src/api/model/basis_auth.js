@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-06 07:59:39
+ * @LastEditTime: 2023-10-17 22:05:08
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -39,9 +39,23 @@ export default {
 			url: `${config.API_URL}/basis/auth/user/company`,
 			name: "获取用户的公司列表",
 			get:async function(data={}){
-				return await http.put(this.url, data);
+				return await http.get(this.url, data);
 			}
-		}
+		},
+		getAllowCompany:{
+			url: `${config.API_URL}/basis/auth/user/allowcompany`,
+			name: "获取登陆后的用户公司列表",
+			get:async function(data={}){
+				return await http.get(this.url, data);
+			}
+		},
+		setDefaultCompany:{
+			url: `${config.API_URL}/basis/auth/user/default_company`,
+			name: "切换公司",
+			post:async function(data={}){
+				return await http.post(this.url, data);
+			}
+		},
 
 	}, 
 
