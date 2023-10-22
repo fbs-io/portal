@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-31 06:43:03
+ * @LastEditTime: 2023-10-06 08:00:33
  * @Description: 请填写简介
 -->
 <template>
@@ -54,7 +54,7 @@
 				}
 
 				// 更新信息
-				var res = await this.$API.basis_auth.user.update.put(data)
+				var res = await this.$API.basis_auth.user.update.post(data)
 				if(res.errno == 0){
 					this.$TOOL.data.set("USER_INFO", res.details)
 				// }else{

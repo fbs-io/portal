@@ -31,11 +31,11 @@ var isReloadLogin = false
 // HTTP response 拦截器
 axios.interceptors.response.use(
 	(response) => {
-
 		var token = response.headers.get("X-Csrf-Token")
-		if(response.data.errno == 0 && token.length>0){
+		if(token && response.data.errno == 0 && token.length>0){
 			tool.cookie.set("TOKEN", token, {
-				expires: 30*60
+				expires: sysConfig.TOKEN_EXPIRED_TIME,
+				// path:"/"
 			})
 		}
 		if (response.data.errno ==0 ){

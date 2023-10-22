@@ -1,16 +1,16 @@
 <!--
  * @Author: reel
- * @Date: 2023-09-06 20:38:09
+ * @Date: 2023-10-05 14:05:58
  * @LastEditors: reel
- * @LastEditTime: 2023-09-07 06:15:26
- * @Description: 请填写简介
+ * @LastEditTime: 2023-10-06 07:52:27
+ * @Description: 分配给用户公司权限
 -->
 <template>
-	<el-dialog :title="'分配角色'" v-model="visible" :width="500" destroy-on-close @closed="$emit('closed')">
+	<el-dialog :title="'分配公司'" v-model="visible" :width="500" destroy-on-close @closed="$emit('closed')">
 		<el-form :model="form"  ref="dialogForm" label-width="100px" label-position="left">
-			<el-form-item label="所属角色" prop="role">
-				<el-select v-model="form.role" multiple filterable style="width: 100%">
-					<el-option v-for="item in roles" :key="item.code" :label="item.label" :value="item.code"/>
+			<el-form-item label="所属公司" prop="companies">
+				<el-select v-model="form.company" multiple filterable style="width: 100%" :props="companiesProps">
+					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code" />
 				</el-select>
 			</el-form-item>
 		</el-form>
@@ -28,18 +28,22 @@
             return {
                 visible: false,
                 isSaveing: false,
-                isDefaultPwd:false,
                 //表单数据
                 form: {
                     id: [],
-                    role: [],
+                    company: [],
                 },
                 //所需数据选项
-                roles: [],
+                companies: [],
+                companiesProps:{
+                    value:"company_code",
+                    multiple: true,
+                    checkStrictly: true
+                }
             }
         },
         mounted() {
-            this.getRoles()
+            this.getData()
         },
         methods: {
             //显示
@@ -49,9 +53,9 @@
                 return this
             },
             //加载树数据
-            async getRoles(){
-                var res = await this.$API.basis_auth.roles.list();
-                this.roles = res.details.rows;
+            async getData(){
+                var res = await this.$API.basis_org.company.list({page_num:-1,page_size:-1});
+                this.companies = res.details.rows;
             },
             //表单提交方法
             async submit(){

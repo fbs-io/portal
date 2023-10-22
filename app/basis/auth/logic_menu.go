@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:22:41
+ * @LastEditTime: 2023-10-20 06:14:42
  * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
@@ -23,6 +23,7 @@ type menuTree struct {
 	Code       string          `json:"code"`
 	PCode      string          `json:"pcode"`
 	Level      int8            `json:"levle"`
+	Name       string          `json:"name"`
 	Desc       string          `json:"desc"`
 	Api        string          `json:"api"`
 	Type       int8            `json:"type"`
@@ -38,7 +39,7 @@ type menuTree struct {
 }
 
 // TODO: 增加角色判断
-func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissionList []string, err error) {
+func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
 	source := &core.Sources{}
 
 	// 构筑条件
@@ -49,11 +50,11 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 	// TODO: 通过缓存/视图的方式, 减少数据库查询次数
 	// 获取用户
 	user := &User{}
-	err = c.RDB().DB().Where("account = (?)", account).Find(user).Error
+	err = ctx.NewTX().Where("account = (?)", account).Find(user).Error
 	if err != nil {
 		return
 	}
-	permissionList = []string{""}
+	permissionList := []string{""}
 	if user.Super != "Y" {
 		// 获取用户关联的角色
 		roles := make([]*Role, 0, 100)
@@ -61,7 +62,9 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 		for _, roleCode := range user.Role {
 			userRoles = append(userRoles, roleCode.(string))
 		}
-		err = c.RDB().DB().Where("code in (?)", userRoles).Find(&roles).Error
+		// 设置把分区字段放入上下文,
+		// 用户登陆逻辑复杂, 本处特别处理
+		err = ctx.NewTX().Where("code in (?) ", userRoles).Find(&roles).Error
 		if err != nil {
 			return
 		}
@@ -69,7 +72,6 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 		for _, role := range roles {
 			for _, source := range role.Sources {
 				permissionList = append(permissionList, source.(string))
-
 			}
 		}
 	}
@@ -77,7 +79,7 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 
 	// 登陆后返回的菜单信息
 	case QUERY_MENU_MODE_INFO:
-		cond.Where["is_router = (?) "] = core.SOURCE_ROUTER_IS
+		cond.Where["type > (?)"] = 0
 		if user.Super != "Y" {
 			cond.Where["code in (?) or type in (1,3,5)"] = permissionList
 		}
@@ -94,15 +96,14 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 		}
 	}
 
+	permissions = make(map[string]bool, 100)
 	// 通过角色关联权限和菜单
-
 	menuList := make([]*core.Sources, 0, 1000)
-	tx := c.RDB().BuildQuery(cond).Offset(-1).Limit(-1)
+	tx := ctx.Core().RDB().BuildQuery(cond).Offset(-1).Limit(-1)
 	err = tx.Find(&menuList).Error
 	if err != nil {
 		return
 	}
-
 	// 构筑树表需要的变量
 	menuMap := make(map[int8]map[string]*menuTree, 100)
 	tree = make([]*menuTree, 0, 100)
@@ -112,10 +113,15 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 		if i == 0 {
 			level = m.Level
 		}
+		switch m.Type {
+		case core.SOURCE_TYPE_UNLIMITED, core.SOURCE_TYPE_PERMISSION, core.SOURCE_TYPE_UNPERMISSION:
+			permissions[m.Code] = true
+		}
 		mTree := &menuTree{
 			ID:         m.ID,
 			Code:       m.Code,
 			PCode:      m.PCode,
+			Name:       m.Name,
 			Desc:       m.Desc,
 			Level:      m.Level,
 			Api:        m.Api,
@@ -132,7 +138,7 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 			menuMap[m.Level] = make(map[string]*menuTree)
 		}
 		menuMap[m.Level][m.Code] = mTree
-		if m.Level == level {
+		if m.Level == level && m.IsRouter == core.SOURCE_ROUTER_IS {
 			tree = append(tree, mTree)
 		} else {
 			pt := menuMap[m.Level-1][m.PCode]
@@ -141,10 +147,13 @@ func getMenuTree(c core.Core, account, mode string) (tree []*menuTree, permissio
 			} else {
 				if mTree.IsRouter == core.SOURCE_ROUTER_IS && mTree.Type == core.SOURCE_TYPE_UNMENU {
 					allowTree = append(allowTree, mTree)
+				} else {
+
 				}
 			}
 		}
 	}
 	tree = append(tree, allowTree...)
+
 	return
 }

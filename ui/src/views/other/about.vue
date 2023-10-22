@@ -1,10 +1,17 @@
+<!--
+ * @Author: reel
+ * @Date: 2023-07-30 22:36:55
+ * @LastEditors: reel
+ * @LastEditTime: 2023-10-04 23:06:44
+ * @Description: 请填写简介
+-->
 <template>
 	<el-main>
 		<el-row :gutter="15">
 			<el-col :lg="24">
 				<el-card shadow="never" class="aboutTop">
 					<div class="aboutTop-info">
-						<img src="/img/logo.png">
+						<img src="/website/img/logo.png">
 						<h2>{{data.name}}</h2>
 						<p>{{data.version}}</p>
 					</div>

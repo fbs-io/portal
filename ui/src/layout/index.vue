@@ -3,9 +3,17 @@
 	<template v-if="layout=='header'">
 		<header class="adminui-header">
 			<div class="adminui-header-left">
-				<div class="logo-bar">
-					<img class="logo" src="/img/logo.png">
-					<span>{{ $CONFIG.APP_NAME }}</span>
+				<div class="logo-bar" style="width: 25em;">
+					<img class="logo" src="/website/img/logo.png">
+					<span v-if="companies.length<=1">{{ company }}</span>
+					<el-dropdown  v-if="companies.length>1" class="" trigger="click" @command="selectCompany">
+							<span class="adminui-header adminui-header-left logo-bar">{{ company }}</span>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<el-dropdown-item v-for="item in companies" :command="item.company_code">{{ item.company_name }}</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
 				</div>
 				<ul v-if="!ismobile" class="nav">
 					<li v-for="item in menu" :key="item" :class="pmenu.path==item.path?'active':''" @click="showMenu(item)">
@@ -55,7 +63,7 @@
 		<header class="adminui-header">
 			<div class="adminui-header-left">
 				<div class="logo-bar">
-					<img class="logo" src="/img/logo.png">
+					<img class="logo" src="/website/img/logo.png">
 					<span>{{ $CONFIG.APP_NAME }}</span>
 				</div>
 			</div>
@@ -97,7 +105,7 @@
 		<header class="adminui-header">
 			<div class="adminui-header-left">
 				<div class="logo-bar">
-					<img class="logo" src="/img/logo.png">
+					<img class="logo" src="/website/img/logo.png">
 					<span>{{ $CONFIG.APP_NAME }}</span>
 				</div>
 			</div>
@@ -132,7 +140,7 @@
 			<div v-if="!ismobile" class="aminui-side-split">
 				<div class="aminui-side-split-top">
 					<router-link :to="$CONFIG.DASHBOARD_URL">
-						<img class="logo" :title="$CONFIG.APP_NAME" src="/img/logo-r.png">
+						<img class="logo" :title="$CONFIG.APP_NAME" src="/website/img/logo-r.png">
 					</router-link>
 				</div>
 				<div class="adminui-side-split-scroll">
@@ -215,7 +223,9 @@
 				menu: [],
 				nextMenu: [],
 				pmenu: {},
-				active: ''
+				active: '',
+				companies:[],
+				company:'Default'
 			}
 		},
 		computed:{
@@ -249,6 +259,10 @@
 				},
 				immediate: true,
 			}
+		},
+		mounted(){
+			this.getCompanies()
+			// this.company = this.$TOOL.data.get("USER_COMPANY").company_name
 		},
 		methods: {
 			openSetting(){
@@ -297,7 +311,41 @@
 			//退出最大化
 			exitMaximize(){
 				document.getElementById('app').classList.remove('main-maximize')
-			}
+			},
+			//
+			async getCompanies(){
+				var user  = this.$TOOL.data.get("USER_INFO")
+				var res = await this.$API.basis_auth.user.getAllowCompany.get({account:user.account})
+				if (res.details.companies && res.details.companies.length>=1){
+					this.companies = res.details.companies
+					this.formatCompany(res.details.company)
+				}
+
+				
+			},
+			formatCompany(company_code){
+				if (this.companies && this.companies.length>0){
+					this.companies.forEach(item=>{
+						if (item.company_code == company_code){
+							this.company = item.company_name
+						}
+						if (this.company == ""){
+							this.company = "Default"
+						}
+					})
+				}
+			},
+			async selectCompany(company){
+				var user  = this.$TOOL.data.get("USER_INFO")
+				var res = await this.$API.basis_auth.user.setDefaultCompany.post({account:user.account,company:company}) 
+				if (res.errno==0){
+					this.$TOOL.data.set("USER_COMPANY",company)
+					this.formatCompany(company)
+					this.$TOOL.data.set("MENU",res.details.menu)
+					this.$TOOL.data.set("PERMISSIONS",res.details.permissions)
+				}
+				this.$router.go(0)
+			},
 		}
 	}
 </script>

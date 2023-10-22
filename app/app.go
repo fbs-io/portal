@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-09-14 22:08:48
+ * @LastEditTime: 2023-10-17 07:30:01
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -11,15 +11,27 @@ import (
 	"fmt"
 	"net/http"
 	"portal/app/basis"
-	"portal/ui"
+	"portal/ui/dist"
 
 	"github.com/fbs-io/core"
+	"github.com/fbs-io/core/store/rdb"
 	"github.com/gin-gonic/gin"
 )
 
 func New(c core.Core) {
+	// 使用数据分区模式
+	c.RDB().AddMigrateList(func() error {
+		res, _ := queryDimList(c.RDB().DB(), DIM_TYPE_COMPANY)
+		suffixList := make([]interface{}, 0, len(res))
+		for _, item := range res {
+			suffixList = append(suffixList, item.Code)
+		}
+		c.RDB().SetShardingModel(rdb.SHADING_MODEL_TABLE, suffixList)
+		return nil
+	})
 	// 中间件使用
 	core.STATIC_PATH_PREFIX = "/website/"
+
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", "/"))
 	core.AddAllowSource(fmt.Sprintf("%s:%s", "GET", ""))
 
@@ -33,23 +45,29 @@ func New(c core.Core) {
 	// 权限校验
 
 	// 加载静态资源
-	c.Engine().Any(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
-		staticSrv := http.FileServer(http.FS(ui.Static))
+	c.Engine().GET(core.STATIC_PATH_PREFIX+"*filepath", func(ctx *gin.Context) {
+		staticSrv := http.FileServer(http.FS(dist.Static))
 		staticSrv.ServeHTTP(ctx.Writer, ctx.Request)
 	})
 	c.Engine().GET("/", func(ctx *gin.Context) {
 		ctx.Header("Content-Type", "text/html;charset=utf-8")
-		ctx.String(200, string(ui.Index))
+		ctx.String(200, string(dist.Index))
 	})
 
+	c.Engine().NoRoute(func(ctx *gin.Context) {
+		ctx.Header("Content-Type", "text/html;charset=utf-8")
+		ctx.String(200, string(dist.Index))
+		ctx.Writer.Flush()
+	})
 	// 加载
 	ajax := c.Group("ajax").WithPermission(core.SOURCE_TYPE_LIMITED)
 	{
 		_ = ajax.Group("home", "首页").WithPermission(core.SOURCE_TYPE_UNMENU).WithMeta("icon", "el-icon-help-filled")
 
+		ajax.GET("uipermission", "页面权限", uiPermissionParams{}, uiPermission()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
+		ajax.GET("dimension", "维度列表", dimensionParams{}, dimList()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
 	}
 
 	// 初始化basis模块
 	basis.New(ajax)
-
 }

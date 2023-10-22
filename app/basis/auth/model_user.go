@@ -2,12 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-09-04 22:06:32
+ * @LastEditTime: 2023-10-15 13:28:50
  * @Description: 用户表,管理用户信息
  */
 package auth
 
 import (
+	"portal/pkg/consts"
+
 	"github.com/fbs-io/core/store/rdb"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -23,8 +25,10 @@ type User struct {
 	IP          string           `gorm:"comment:登陆IP"`
 	Super       string           `gorm:"comment:是否超管, Y表示是, N表示否;default:N"`
 	Role        rdb.ModeListJson `gorm:"comment:角色;type:varchar(1000)"`
+	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
 	UUID        string           `gorm:"comment:uuid"`
 	Permissions map[string]bool  `gorm:"-" json:"permission"` // 权限校验
+	Menu        []*menuTree      `gorm:"-" json:"menu"`       // 菜单
 	rdb.Model
 }
 
@@ -37,31 +41,27 @@ type UserList struct {
 	Super     string           `json:"super"`
 	CreatedAt uint64           `json:"created_at"`
 	Status    int8             `json:"status"`
-	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)"`
+	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(10240)"`
+	Company   rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
 }
 
 func (u *User) TableName() string {
-	return "e_auth_user"
+	return consts.TABLE_BASIS_AUTH_USER
+
 }
 
 // gorm中间件操作
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	u.UUID = uuid.New().String()
-	u.Model.BeforeCreate(tx)
 	if u.Super == "" {
 		u.Super = "N"
 	}
 	return u.encodePwd()
 }
-func (u *User) BeforeUpdate(tx *gorm.DB) error {
-	u.Model.BeforeUpdate(tx)
-	return u.encodePwd()
-}
 
-func (u *User) BeforeDelete(tx *gorm.DB) error {
-	u.Model.BeforeDelete(tx)
-	return nil
+func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	return u.encodePwd()
 }
 
 // User模型相关操作
@@ -104,13 +104,3 @@ func (user *User) chpwd(param *userChPwdParams) (err error) {
 	user.Password = param.NewPwd
 	return
 }
-
-// // 用户更新
-// func (user *User) update(tx *gorm.DB, param *userUpdateParams) (err error) {
-// 	user.NickName = param.NickName
-// 	user.Email = param.Email
-// 	user.Role = param.Role
-// 	user.ID = param.ID
-// 	user.Status = param.Status
-// 	return tx.Updates(user).Error
-// }

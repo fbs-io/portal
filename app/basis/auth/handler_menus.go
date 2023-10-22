@@ -2,14 +2,12 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:47:39
+ * @LastEditTime: 2023-10-17 21:23:48
  * @Description: 菜单相关api逻辑
  */
 package auth
 
 import (
-	"time"
-
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/store/rdb"
@@ -82,7 +80,7 @@ func menusAdd() core.HandlerFunc {
 // 菜单查询, 返回树表结构
 func menusQueryWithManager() core.HandlerFunc {
 	return func(ctx core.Context) {
-		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), QUERY_MENU_MODE_MANAGE)
+		menus, _, err := getMenuTree(ctx, ctx.Auth(), QUERY_MENU_MODE_MANAGE)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
@@ -146,10 +144,10 @@ func menusDelete() core.HandlerFunc {
 		tx := ctx.TX()
 
 		menus := &core.Sources{}
-		menus.DeletedBy = ctx.Auth()
-		menus.DeletedAT = uint(time.Now().Unix())
+		// menus.DeletedBy = ctx.Auth()
+		// menus.DeletedAT = uint(time.Now().Unix())
 
-		err := tx.Model(menus).Where("id in (?)", param.ID).Updates(menus).Error
+		err := tx.Model(menus).Where("id in (?)", param.ID).Delete(menus).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return

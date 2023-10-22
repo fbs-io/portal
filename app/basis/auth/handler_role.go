@@ -2,13 +2,13 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:47:19
+ * @LastEditTime: 2023-10-20 06:14:25
  * @Description: 角色相关api逻辑
  */
 package auth
 
 import (
-	"time"
+	"portal/pkg/sequence"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
@@ -24,11 +24,12 @@ type roleAddParams struct {
 	Sources     rdb.ModeListJson `json:"sources"`
 }
 
-func roleAdd() core.HandlerFunc {
+func roleAdd(roleSeq sequence.Sequence) core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*roleAddParams)
 		tx := ctx.TX()
 		role := &Role{
+			Code:        roleSeq.Code(),
 			Label:       param.Label,
 			Sort:        param.Sort,
 			Description: param.Description,
@@ -60,11 +61,9 @@ func rolesQuery() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*rolesQueryParams)
 		role := &Role{}
-
 		// 使用子查询, 优化分页查询
 		tx := ctx.TX(
 			core.SetTxMode(core.TX_QRY_MODE_SUBID),
-			core.SetTxSubTable(role.TableName()),
 		)
 		roles := make([]*Role, 0, 100)
 
@@ -128,10 +127,8 @@ func rolesDelete() core.HandlerFunc {
 		tx := ctx.TX()
 
 		role := &Role{}
-		role.DeletedBy = ctx.Auth()
-		role.DeletedAT = uint(time.Now().Unix())
 
-		err := tx.Model(role).Where("id in (?)", param.ID).Updates(role).Error
+		err := tx.Model(role).Where("id in (?)", param.ID).Delete(role).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return
@@ -143,7 +140,7 @@ func rolesDelete() core.HandlerFunc {
 // 菜单和权限查询, 返回树表结构
 func menusQueryWithPermission() core.HandlerFunc {
 	return func(ctx core.Context) {
-		menus, _, err := getMenuTree(ctx.Core(), ctx.Auth(), QUERY_MENU_MODE_PERMISSION)
+		menus, _, err := getMenuTree(ctx, ctx.Auth(), QUERY_MENU_MODE_PERMISSION)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return

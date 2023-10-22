@@ -1,22 +1,27 @@
+/*
+ * @Author: reel
+ * @Date: 2023-07-30 22:36:55
+ * @LastEditors: reel
+ * @LastEditTime: 2023-10-06 07:58:06
+ * @Description: 自定义v-auth指令
+ */
 import { permission } from '@/utils/permission'
+import { ref } from "vue"
 
 export default {
-	mounted(el, binding) {
+	updated(el,binding){
+		var ok  = ref(false)
 		const { value } = binding
 		if(Array.isArray(value)){
-			let ishas = false;
 			value.forEach(item => {
 				if(permission(item)){
-					ishas = true;
+					ok = ref(true);
 				}
 			})
-			if (!ishas){
-				el.parentNode.removeChild(el)
-			}
 		}else{
-			if(!permission(value)){
-				el.parentNode.removeChild(el);
-			}
+			ok = ref(permission(value))
 		}
+		el.style.display = ok.value ? "block":"none"
 	}
+	
 };

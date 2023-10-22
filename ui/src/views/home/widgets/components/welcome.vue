@@ -2,14 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-30 22:36:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-03 23:32:55
+ * @LastEditTime: 2023-10-04 23:06:21
  * @Description: 请填写简介
 -->
 <template>
 	<el-card shadow="hover" header="欢迎">
 		<div class="welcome">
 			<div class="logo">
-				<img src="/img/logo.png">
+				<img src="/website/img/logo.png">
 				<h2>欢迎体验 FBS Portal</h2>
 			</div>
 			<div class="tips">

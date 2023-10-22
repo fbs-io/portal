@@ -5,11 +5,11 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	github.com/fbs-io/core v0.0.0-20230914220029-72ecf88017bf
+	github.com/fbs-io/core v0.0.0-20231018232931-0e618a1fbfbc
 	github.com/gin-gonic/gin v1.9.0
 	github.com/google/uuid v1.3.0
-	golang.org/x/crypto v0.6.0
-	gorm.io/gorm v1.25.1
+	golang.org/x/crypto v0.8.0
+	gorm.io/gorm v1.25.4
 )
 
 require (
@@ -22,9 +22,10 @@ require (
 	github.com/go-playground/validator/v10 v10.11.2 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.0 // indirect
+	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -56,13 +57,13 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.0 // indirect
-	gorm.io/driver/postgres v1.5.0 // indirect
+	gorm.io/driver/mysql v1.5.1 // indirect
+	gorm.io/driver/postgres v1.5.2 // indirect
 	gorm.io/driver/sqlite v1.5.0 // indirect
 )
 

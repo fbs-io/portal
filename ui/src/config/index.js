@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-08-19 14:48:16
+ * @LastEditTime: 2023-10-06 09:19:55
  * @Description: 请填写简介
  */
 const DEFAULT_CONFIG = {
@@ -26,6 +26,9 @@ const DEFAULT_CONFIG = {
 
 	//TokenName
 	TOKEN_NAME: "Authorization",
+	
+	// token 过期, 正常半小时, 开发环境30天
+	TOKEN_EXPIRED_TIME: import.meta.env.VITE_ENV === 'development' ? 1800 *48 *30 :1800, 
 
 	//Token前缀，注意最后有个空格，如不需要需设置空字符串
 	TOKEN_PREFIX: "Bearer ",
@@ -69,8 +72,7 @@ const DEFAULT_CONFIG = {
 		copmsList: [
 			['welcome'],
 			['about', 'ver'],
-			['time', 'progress']
-		]
+			['time', 'progress']		]
 	}
 }
 

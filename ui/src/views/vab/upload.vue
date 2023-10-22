@@ -86,8 +86,8 @@
 					}
 				],
 				fileurl: "http://www.scuiadmin.com/files/220000198611262243.xlsx,http://www.scuiadmin.com/files/350000201004261875.xlsx",
-				fileurl2: "/img/auth_banner.jpg,/img/avatar3.gif",
-				fileurl3: "/img/auth_banner.jpg",
+				fileurl2: "/website/img/auth_banner.jpg,/website/img/avatar3.gif",
+				fileurl3: "/website/img/auth_banner.jpg",
 				fileurl4: "",
 				fileurl5: "",
 				fileurl6: "",

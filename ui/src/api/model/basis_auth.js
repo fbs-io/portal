@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-09-15 06:51:22
+ * @LastEditTime: 2023-10-17 22:05:08
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -12,7 +12,7 @@ export default {
 
 	// 登陆
 	token: {
-		url: `${config.API_URL}/basis/user/login`,
+		url: `${config.API_URL}/basis/auth/user/login`,
 		name: "登录获取TOKEN",
 		post: async function(data={}){
 			return await http.post(this.url, data);
@@ -22,17 +22,38 @@ export default {
 	// user操作
 	user: {
 		update: {
-			url: `${config.API_URL}/basis/user/update`,
+			url: `${config.API_URL}/basis/auth/user/update`,
 			name: "修改用户信息",
-			put: async function(data={}){
-				return await http.put(this.url, data);
+			post: async function(data={}){
+				return await http.post(this.url, data);
 			}
 		},
 		chPwd: {
-			url: `${config.API_URL}/basis/user/chpwd`,
+			url: `${config.API_URL}/basis/auth/user/chpwd`,
 			name: "修改用户密码",
-			put: async function(data={}){
-				return await http.put(this.url, data);
+			post: async function(data={}){
+				return await http.post(this.url, data);
+			}
+		},
+		getCompany:{
+			url: `${config.API_URL}/basis/auth/user/company`,
+			name: "获取用户的公司列表",
+			get:async function(data={}){
+				return await http.get(this.url, data);
+			}
+		},
+		getAllowCompany:{
+			url: `${config.API_URL}/basis/auth/user/allowcompany`,
+			name: "获取登陆后的用户公司列表",
+			get:async function(data={}){
+				return await http.get(this.url, data);
+			}
+		},
+		setDefaultCompany:{
+			url: `${config.API_URL}/basis/auth/user/default_company`,
+			name: "切换公司",
+			post:async function(data={}){
+				return await http.post(this.url, data);
 			}
 		},
 
@@ -40,26 +61,26 @@ export default {
 
 	// 用户批量操作
 	users:{
-		url: `${config.API_URL}/basis/users`,
+		url: `${config.API_URL}/basis/auth/users`,
 		name: "用户列表操作",
 		// 查询
 		list: async function(data={}){
-			return await http.get(`${config.API_URL}/basis/users/list`, data);
+			return await http.get(`${config.API_URL}/basis/auth/users/list`, data);
 		},
 		// 新增
 		add: async function(data={}){
-			return await http.put(`${config.API_URL}/basis/users/add`, data);
+			return await http.put(`${config.API_URL}/basis/auth/users/add`, data);
 		},
 		// 更新
 		edit: async function(data={}){
-			return await http.post(`${config.API_URL}/basis/users/edit`, data);
+			return await http.post(`${config.API_URL}/basis/auth/users/edit`, data);
 		},
 		// 删除
 		delete: async function(data={}){
-			return await http.delete(`${config.API_URL}/basis/users/delete`, data);
+			return await http.delete(`${config.API_URL}/basis/auth/users/delete`, data);
 		},
 		updates: async function(data={}){
-			return await http.post(`${config.API_URL}/basis/users/edit`, data);
+			return await http.post(`${config.API_URL}/basis/auth/users/edit`, data);
 		},
 	},
 
@@ -70,29 +91,29 @@ export default {
 
 		// 单行新增
 		add: async function(data={}){
-			return await http.put(`${config.API_URL}/basis/roles/add`, data);
+			return await http.put(`${config.API_URL}/basis/auth/roles/add`, data);
 		},
 		
 		// 查询列表
 		list: async function(data={}){
-			return await http.get(`${config.API_URL}/basis/roles/list`, data);
+			return await http.get(`${config.API_URL}/basis/auth/roles/list`, data);
 		},
 		
 		// 批量更新, 
 		// 但根据业务, 不允许赋予多个角色相同的权限
 		// 但允许批量停用, 删除等
 		edit: async function(data={}){
-			return await http.post(`${config.API_URL}/basis/roles/edit`, data);
+			return await http.post(`${config.API_URL}/basis/auth/roles/edit`, data);
 		},
 
 		// 批量删除
 		delete: async function(data={}){
-			return await http.delete(`${config.API_URL}/basis/roles/delete`, data);
+			return await http.delete(`${config.API_URL}/basis/auth/roles/delete`, data);
 		},
 
 		// 获取权限菜单树表
 		permission: async function(data={}){
-			return await http.get(`${config.API_URL}/basis/roles/permission`, data);
+			return await http.get(`${config.API_URL}/basis/auth/roles/permission`, data);
 		},
 	},
 
@@ -103,24 +124,24 @@ export default {
 
 		// 单行新增
 		add: async function(data={}){
-			return await http.put(`${config.API_URL}/basis/menus/add`, data);
+			return await http.put(`${config.API_URL}/basis/auth/menus/add`, data);
 		},
 		
 		// 查询列表
 		list: async function(data={}){
-			return await http.get(`${config.API_URL}/basis/menus/list`, data);
+			return await http.get(`${config.API_URL}/basis/auth/menus/list`, data);
 		},
 		
 		// 批量更新, 
 		// 但根据业务, 不允许赋予多个角色相同的权限
 		// 但允许批量停用, 删除等
 		edit: async function(data={}){
-			return await http.post(`${config.API_URL}/basis/menus/edit`, data);
+			return await http.post(`${config.API_URL}/basis/auth/menus/edit`, data);
 		},
 
 		// 批量删除
 		delete: async function(data={}){
-			return await http.delete(`${config.API_URL}/basis/menus/delete`, data);
+			return await http.delete(`${config.API_URL}/basis/auth/menus/delete`, data);
 		},
 	}
 }
