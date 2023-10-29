@@ -1,25 +1,13 @@
-<!--
- * @Author: reel
- * @Date: 2023-08-31 21:51:57
- * @LastEditors: reel
-<<<<<<< HEAD:ui/src/views/basis/auth/roles/index.vue
- * @LastEditTime: 2023-10-06 20:50:16
-=======
- * @LastEditTime: 2023-10-29 08:08:55
->>>>>>> feat-org:ui/src/views/basis/roles/index.vue
- * @Description: 角色管理
--->
 <template>
 	<el-container>
 		<el-header>
 			<div class="left-panel">
 				<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
 				<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
-				<!-- <el-button type="primary" plain :disabled="selection.length!=1" @click="permission">权限设置</el-button> -->
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
-					<el-input v-model="search.label" placeholder="角色名称" clearable></el-input>
+					<el-input v-model="search.department_name" placeholder="部门名称" clearable></el-input>
 					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
 			</div>
@@ -27,10 +15,12 @@
 		<el-main class="nopadding">
 			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>
 				<el-table-column type="selection" width="50"></el-table-column>
-				<el-table-column label="#" porp="id" type="index" width="50"></el-table-column>
-				<el-table-column label="角色名称" prop="label" width="150"></el-table-column>
-				<el-table-column label="角色描述" prop="description" width="360"></el-table-column>
-				<el-table-column label="排序" prop="sort" width="80"></el-table-column>
+				<el-table-column label="部门编码"  prop="department_code" width="200"></el-table-column>
+				<el-table-column label="部门名称"  prop="department_name" width="150"></el-table-column>
+				<el-table-column label="部门描述"  prop="department_comment" width="150"></el-table-column>
+				<el-table-column label="部门层级"  prop="department_level" width="120"></el-table-column>
+				<el-table-column label="自定义层级" prop="department_custom_level" width="120"></el-table-column>
+				<el-table-column label="部门全路径" prop="department_full_path" width="200"></el-table-column>
 				<el-table-column label="状态" prop="status" width="80">
 					<template #default="scope">
 						<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -43,7 +33,6 @@
 				<el-table-column label="操作" fixed="right" align="right" width="170">
 					<template #default="scope">
 						<el-button-group>
-							<el-button text type="primary"  v-auth="auth?auth.get:auth" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button>
 							<el-button text type="primary"  v-auth="auth?auth.post:auth"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
@@ -59,15 +48,11 @@
 	</el-container>
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
-	<!-- <save-dialog v-if="dialog.save" ref="saveDialog" @closed="dialog.save=false"></save-dialog> -->
-
-	<!-- <permission-dialog v-if="dialog.permission" ref="permissionDialog" @closed="dialog.permission=false"></permission-dialog> -->
 
 </template>
 
 
 <script>
-	import { ref } from 'vue';
 	import saveDialog from './save'
 
 	export default {
@@ -81,26 +66,24 @@
 					save: false
 				},
 				showGrouploading: false,
-				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.basis_auth.roles.list,
+				apiObj: this.$API.basis_org.department.tree,
 				selection: [],
 				search: {
 					company_name: null
 				},
 				auth:{
-					put:""
+					put: '',
+					post: '',
+					get: '',
+					delete: '',
 				}
 			}
 		},
-		watch: {
-			groupFilterText(val) {
-				this.$refs.group.filter(val);
-			}
-		},
+		// watch: {
 
+		// },
 		mounted() {
-			// this.getGroup()
 			this.getUiPermission()
 		},
 		methods: {
@@ -109,6 +92,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open()
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//编辑
@@ -116,6 +100,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('edit').setData(row)
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//查看
@@ -135,9 +120,11 @@
 			//删除
 			async table_del(row, index){
 				var reqData = {id: [row.id]}
-				await this.$API.basis_auth.roles.delete(reqData);
+				await this.$API.basis_org.department.delete(reqData);
 				this.$refs.table.tableData.splice(index, 1)
-				this.$refs.table.reload()
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
 			},
 			//批量删除
 			async batch_del(){
@@ -154,9 +141,12 @@
 						reqData.unshift(item.id)
 					})
 					const loading = this.$loading();
-					this.$API.basis_auth.roles.delete({id: reqData})
+					this.$API.basis_org.department.delete({id: reqData})
 					loading.close();
-					this.$refs.table.reload()
+					setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
+					
 				}).catch(() => {
 				})
 			},
@@ -165,46 +155,16 @@
 			selectionChange(selection){
 				this.selection = selection;
 			},
-			async getUiPermission(){
-				var path = this.$router.currentRoute.value.fullPath
-				var res = await this.$API.common.uiPermissions.get({path:path})
-				this.auth = res.details
-			},
-			// //加载树数据 TODO: 后期增加角色组
-			// async getGroup(){
-			// 	this.showGrouploading = true;
-			// 	var res = await this.$API.basis_auth.roles.list();
-			// 	this.showGrouploading = false;
-			// 	var allNode ={id: '', label: '所有'}
-			// 	// res.data.unshift(allNode);
-			// 	this.group = res.data;
-			// },
-			//树过滤
-			// groupFilterNode(value, data){
-			// 	if (!value) return true;
-			// 	return data.label.indexOf(value) !== -1;
-			// },
-			// //树点击事件
-			// groupClick(data){
-			// 	var params = {
-			// 		groupId: data.id
-			// 	}
-			// 	this.$refs.table.reload(params)
-			// },
+
 			//搜索
 			upsearch(){
 				this.$refs.table.upData(this.search)
 			},
 			// //本地更新数据
 			handleSuccess(data, mode){
-				if(mode=='add'){
-					// this.$refs.table.tableData.unshift(data)
-					this.$refs.table.reload()
-				}else if(mode=='edit'){
-					this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
-						Object.assign(item, data)
-					})
-				}
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
 			},
 			// 时间序列化
 			timestampToTime (row, column) {
@@ -223,8 +183,13 @@
 				row.$switch_status = true;
 				setTimeout(()=>{
 					delete row.$switch_status;
-					var res = this.$API.basis_auth.roles.edit({id:[row.id],status:row.status});
+					var res = this.$API.basis_org.department.edit({id:[row.id],status:row.status});
 				}, 1000)
+			},
+			async getUiPermission(){
+				var path = this.$router.currentRoute.value.fullPath
+				var res = await this.$API.common.uiPermissions.get({path:path})
+				this.auth = res.details
 			},
 		}
 	}

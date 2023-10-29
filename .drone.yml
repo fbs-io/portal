@@ -59,7 +59,7 @@ steps:
       from_secret: fbsportal_dev_pwd
     command_timeout: 2m
     script:
-      - bash ./stop.sh
+      - pkill -9 fbs_portal
       - nohup ./fbs_portal -env fat -dbinit e_sys_sources >> out.log 2>&1 &
 
 volumes: # 本地目录

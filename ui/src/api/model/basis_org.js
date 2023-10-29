@@ -3,7 +3,11 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
+<<<<<<< HEAD
  * @LastEditTime: 2023-09-29 21:57:53
+=======
+ * @LastEditTime: 2023-10-28 21:16:57
+>>>>>>> feat-org
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -34,6 +38,7 @@ export default {
 
 	},
 
+<<<<<<< HEAD
 	// // 角色操作
 	// roles:{
 	// 	url: `${config.API_URL}/basis/roles`,
@@ -94,4 +99,31 @@ export default {
 	// 		return await http.delete(`${config.API_URL}/basis/auth/menus/delete`, data);
 	// 	},
 	// }
+=======
+	department:{
+		url: `${config.API_URL}/basis/org/department/`,
+		name: "用户列表操作",
+		// 查询
+		list: async function(data={}){
+			return await http.get(`${config.API_URL}/basis/org/department/list`, data);
+		},
+		// 查询
+		tree: async function(data={}){
+			return await http.get(`${config.API_URL}/basis/org/department/tree`, data);
+		},
+		// // 新增
+		add: async function(data={}){
+			return await http.put(`${config.API_URL}/basis/org/department/add`, data);
+		},
+		// // 更新
+		edit: async function(data={}){
+			return await http.post(`${config.API_URL}/basis/org/department/edit`, data);
+		},
+		// // 删除
+		delete: async function(data={}){
+			return await http.delete(`${config.API_URL}/basis/org/department/delete`, data);
+		},
+
+	},
+>>>>>>> feat-org
 }
