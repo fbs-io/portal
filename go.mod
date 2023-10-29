@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	github.com/fbs-io/core v0.0.0-20231018232931-0e618a1fbfbc
+	github.com/fbs-io/core v0.0.0-20231029074442-7bc4fe1aa5ee
 	github.com/gin-gonic/gin v1.9.0
 	github.com/google/uuid v1.3.0
 	golang.org/x/crypto v0.8.0

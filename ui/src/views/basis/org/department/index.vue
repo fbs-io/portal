@@ -1,10 +1,3 @@
-<!--
- * @Author: reel
- * @Date: 2023-08-31 21:51:57
- * @LastEditors: reel
- * @LastEditTime: 2023-10-29 15:50:12
- * @Description: 请填写简介
--->
 <template>
 	<el-container>
 		<el-header>
@@ -14,7 +7,7 @@
 			</div>
 			<div class="right-panel">
 				<div class="right-panel-search">
-					<el-input v-model="search.company_name" placeholder="公司名称" clearable></el-input>
+					<el-input v-model="search.department_name" placeholder="部门名称" clearable></el-input>
 					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
 			</div>
@@ -22,12 +15,12 @@
 		<el-main class="nopadding">
 			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>
 				<el-table-column type="selection" width="50"></el-table-column>
-				<el-table-column label="#" porp="id" type="index" width="50"></el-table-column>
-				<el-table-column label="公司编码" sortable='custom' prop="company_code" width="120"></el-table-column>
-				<el-table-column label="公司名称" sortable='custom' prop="company_name" width="200"></el-table-column>
-				<el-table-column label="公司简称" sortable='custom' prop="company_shortname" width="120"></el-table-column>
-				<el-table-column label="公司描述" sortable='custom' prop="company_comment" width="150"></el-table-column>
-				<el-table-column label="所属行业" sortable='custom' prop="company_business" width="120"></el-table-column>
+				<el-table-column label="部门编码"  prop="department_code" width="200"></el-table-column>
+				<el-table-column label="部门名称"  prop="department_name" width="150"></el-table-column>
+				<el-table-column label="部门描述"  prop="department_comment" width="150"></el-table-column>
+				<el-table-column label="部门层级"  prop="department_level" width="120"></el-table-column>
+				<el-table-column label="自定义层级" prop="department_custom_level" width="120"></el-table-column>
+				<el-table-column label="部门全路径" prop="department_full_path" width="200"></el-table-column>
 				<el-table-column label="状态" prop="status" width="80">
 					<template #default="scope">
 						<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -40,7 +33,6 @@
 				<el-table-column label="操作" fixed="right" align="right" width="170">
 					<template #default="scope">
 						<el-button-group>
-							<!-- <el-button text type="primary"  v-auth="permissions.list" size="small" @click="table_show(scope.row, scope.$index)">查看</el-button> -->
 							<el-button text type="primary"  v-auth="auth?auth.post:auth"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
 							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
 								<template #reference>
@@ -61,7 +53,6 @@
 
 
 <script>
-	import { ref } from 'vue';
 	import saveDialog from './save'
 
 	export default {
@@ -75,9 +66,8 @@
 					save: false
 				},
 				showGrouploading: false,
-				groupFilterText: '',
 				group: [],
-				apiObj: this.$API.basis_org.company.list,
+				apiObj: this.$API.basis_org.department.tree,
 				selection: [],
 				search: {
 					company_name: null
@@ -90,11 +80,9 @@
 				}
 			}
 		},
-		watch: {
-			groupFilterText(val) {
-				this.$refs.group.filter(val);
-			}
-		},
+		// watch: {
+
+		// },
 		mounted() {
 			this.getUiPermission()
 		},
@@ -104,6 +92,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open()
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//编辑
@@ -111,6 +100,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('edit').setData(row)
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//查看
@@ -130,9 +120,11 @@
 			//删除
 			async table_del(row, index){
 				var reqData = {id: [row.id]}
-				await this.$API.basis_org.company.delete(reqData);
+				await this.$API.basis_org.department.delete(reqData);
 				this.$refs.table.tableData.splice(index, 1)
-				this.$refs.table.reload()
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
 			},
 			//批量删除
 			async batch_del(){
@@ -149,9 +141,12 @@
 						reqData.unshift(item.id)
 					})
 					const loading = this.$loading();
-					this.$API.basis_org.company.delete({id: reqData})
+					this.$API.basis_org.department.delete({id: reqData})
 					loading.close();
-					this.$refs.table.reload()
+					setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
+					
 				}).catch(() => {
 				})
 			},
@@ -167,14 +162,9 @@
 			},
 			// //本地更新数据
 			handleSuccess(data, mode){
-				if(mode=='add'){
-					// this.$refs.table.tableData.unshift(data)
-					this.$refs.table.reload()
-				}else if(mode=='edit'){
-					this.$refs.table.tableData.filter(item => item.id===data.id ).forEach(item => {
-						Object.assign(item, data)
-					})
-				}
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
 			},
 			// 时间序列化
 			timestampToTime (row, column) {
@@ -193,7 +183,7 @@
 				row.$switch_status = true;
 				setTimeout(()=>{
 					delete row.$switch_status;
-					var res = this.$API.basis_org.company.edit({id:[row.id],status:row.status});
+					var res = this.$API.basis_org.department.edit({id:[row.id],status:row.status});
 				}, 1000)
 			},
 			async getUiPermission(){
