@@ -2,11 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 21:26:33
  * @LastEditors: reel
-<<<<<<< HEAD
- * @LastEditTime: 2023-10-06 09:31:44
-=======
- * @LastEditTime: 2023-10-28 21:49:46
->>>>>>> feat-org
+ * @LastEditTime: 2023-10-29 15:59:16
  * @Description: 请填写简介
  */
 package org
@@ -20,30 +16,16 @@ import (
 func New(route core.RouterGroup) {
 	tx := route.Core().RDB()
 	tx.Register(&Company{})
-<<<<<<< HEAD
-
-	// 公司code生成器
-	companySeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
-=======
 	tx.Register(&Department{})
 
 	// 公司code生成器
 	companySeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
 	// 组织code生成器
 	departmentSeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("D"))
->>>>>>> feat-org
 
 	orgGroup := route.Group("org", "组织管理").WithMeta("icon", "sc-icon-organization")
 
 	// 可以作为帐套使用或作为环境隔离
-<<<<<<< HEAD
-	group := orgGroup.Group("company", "公司管理").WithMeta("icon", "sc-icon-company")
-	{
-		group.GET("list", "公司列表", companyQueryParams{}, companyList())
-		group.PUT("add", "新增公司", companyAddParams{}, companyAdd(companySeq))
-		group.POST("edit", "修改公司", companyEditParams{}, companyEdit())
-		group.DELETE("delete", "删除公司", companyDeleteParams{}, companyDelete())
-=======
 	company := orgGroup.Group("company", "公司管理").WithMeta("icon", "sc-icon-company")
 	{
 		company.GET("list", "公司列表", companyQueryParams{}, companyList())
@@ -61,6 +43,5 @@ func New(route core.RouterGroup) {
 		department.PUT("add", "新增部门", departmentAddParams{}, departmentAdd(departmentSeq))
 		department.POST("edit", "修改部门", departmentEditParams{}, departmentEdit())
 		department.DELETE("delete", "删除部门", departmentDeleteParams{}, departmentDelete())
->>>>>>> feat-org
 	}
 }

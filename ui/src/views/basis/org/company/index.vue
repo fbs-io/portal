@@ -2,11 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
-<<<<<<< HEAD
- * @LastEditTime: 2023-10-06 20:52:26
-=======
- * @LastEditTime: 2023-10-29 15:50:12
->>>>>>> feat-org
+ * @LastEditTime: 2023-10-29 15:59:38
  * @Description: 请填写简介
 -->
 <template>
@@ -100,11 +96,7 @@
 			}
 		},
 		mounted() {
-<<<<<<< HEAD
-			// this.getGroup()
-=======
 			this.getUiPermission()
->>>>>>> feat-org
 		},
 		methods: {
 			//添加
@@ -188,19 +180,11 @@
 			timestampToTime (row, column) {
 				var date = new Date(row[column.property]) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
 				var Y = date.getFullYear() + '-'
-<<<<<<< HEAD
-				var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-'
-				var D = date.getDate() + ' '
-				var h = date.getHours() + ':'
-				var m = date.getMinutes() + ':'
-				var s = date.getSeconds()
-=======
 				var M =  String(date.getMonth()+1).padStart(2,"0") + '-'
 				var D = String(date.getDate()).padStart(2,"0") + ' '
 				var h = String(date.getHours()).padStart(2,"0") + ':'
 				var m = String(date.getMinutes()).padStart(2,"0") + ':'
 				var s = String(date.getSeconds()).padStart(2,"0")
->>>>>>> feat-org
 				return Y+M+D+h+m+s
 			},
 			//表格内开关
