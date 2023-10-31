@@ -85,15 +85,12 @@
 						label: (data)=>{
 							return data.department_name
 						},
-						// value: (data)=>{
-						// 	return data.department_code
-						// }
 					}
 				},
 			}
 		},
 		mounted() {
-			this.getDepartmentTree()
+			// this.getDepartmentTree()
 		},
 		methods: {
 			//显示

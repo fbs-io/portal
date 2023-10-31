@@ -1,15 +1,26 @@
 <template>
-	<!-- <el-container> -->
-		<!-- <el-aside width="200px" v-loading="showGrouploading">
+	<el-container>
+		<el-aside width="200px" v-loading="showGrouploading">
 			<el-container>
 				<el-header>
 					<el-input placeholder="输入关键字进行过滤" v-model="groupFilterText" clearable></el-input>
 				</el-header>
 				<el-main class="nopadding">
-					<el-tree ref="group" class="menu" node-key="id" :data="group" :current-node-key="''" :highlight-current="true" :expand-on-click-node="false" :filter-node-method="groupFilterNode" @node-click="groupClick"></el-tree>
+					<el-tree 
+						ref="group" 
+						class="menu" 
+						node-key="department_code" 
+						:data="department" 
+						:props="department_props"
+						:current-node-key="''" 
+						:highlight-current="true" 
+						:expand-on-click-node="false" 
+						:filter-node-method="groupFilterNode" 
+						@node-click="groupClick">
+					</el-tree>
 				</el-main>
 			</el-container>
-		</el-aside> -->
+		</el-aside>
 		<el-container>
 				<el-header>
 					<div class="left-panel">
@@ -38,8 +49,8 @@
 						
 						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
-						<el-table-column label="邮箱" prop="email" width="150" sortable='custom'></el-table-column>
 						<el-table-column label="所属公司" prop="company" width="200" sortable='custom' :formatter="formatter" ></el-table-column>
+						<el-table-column label="部门" prop="department" width="150" sortable='custom' :formatter="formatter"></el-table-column>
 						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatter"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
@@ -64,7 +75,7 @@
 					</scTable>
 				</el-main>
 		</el-container>
-	<!-- </el-container> -->
+	</el-container>
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
 	<role-dialog v-if="dialog.role" ref="roleDialog" @success="handleSuccess" @closed="dialog.role=false"></role-dialog>
@@ -93,7 +104,12 @@
 				},
 				showGrouploading: false,
 				groupFilterText: '',
-				group: [],
+				department: [],
+				department_props:{
+					label: (data)=>{
+							return data.department_name
+					},
+				},
 				apiObj: this.$API.basis_auth.users.list,
 				selection: [],
 				search: {
@@ -102,6 +118,7 @@
 				formatData:{
 					role:{},
 					company:{},
+					department:{},
 				},
 				auth:{}
 			}
@@ -116,7 +133,7 @@
 				this.getUiPermission()
 				this.getRoles()
 				this.getCompanies()
-				// this.getGroup()
+				this.getDepartments()
 
 			},500)
 		},
@@ -126,6 +143,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open()
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//编辑
@@ -133,6 +151,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('edit').setData(row)
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//查看
@@ -206,22 +225,23 @@
 				this.selection = selection;
 			},
 			//加载树数据
-			async getGroup(){
+			async getDepartment(){
 				this.showGrouploading = true;
-				var res = await this.$API.basis_auth.users.list();
+				var res = await this.$API.basis_org.department.tree();
 				this.showGrouploading = false;
-				var allNode ={id: '', label: '所有'}
-				this.group = res.data;
+				var allNode ={department_code: '', department_name: '所有'}
+				this.department = res.details.rows;
+				this.department.unshift(allNode);
 			},
 			//树过滤
 			groupFilterNode(value, data){
 				if (!value) return true;
-				return data.label.indexOf(value) !== -1;
+				return data.department_name.indexOf(value) !== -1;
 			},
 			//树点击事件
 			groupClick(data){
 				var params = {
-					groupId: data.id
+					department_code: data.department_code
 				}
 				this.$refs.table.reload(params)
 			},
@@ -266,12 +286,23 @@
 					this.formatData.company[item.code] =item.name
 				})
 			},
+			async getDepartments(){
+				var res = await this.$API.common.dimension.get({dim_type:"department"});
+				res.details.forEach(item=>{
+					this.formatData.department[item.code] =item.name
+				})
+			},
 			formatter(row,column,cols){
 				var key = column.property
 				var data = []
 				var filterData = this.formatData[key]
 				if (!cols || !filterData){
 					return 
+				}
+				// console.log(cols)
+				if (typeof cols == "string"){
+					console.log(filterData)
+					return filterData[cols]
 				}
 				cols.forEach(item =>{
 					var dim = filterData[item]
