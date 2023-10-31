@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-10-15 13:28:50
+ * @LastEditTime: 2023-10-31 22:57:27
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -10,6 +10,7 @@ package auth
 import (
 	"portal/pkg/consts"
 
+	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/store/rdb"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -24,8 +25,11 @@ type User struct {
 	Email       string           `gorm:"comment:邮箱"`
 	IP          string           `gorm:"comment:登陆IP"`
 	Super       string           `gorm:"comment:是否超管, Y表示是, N表示否;default:N"`
-	Role        rdb.ModeListJson `gorm:"comment:角色;type:varchar(1000)"`
-	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
+	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(1024)"`
+	Roles       rdb.ModeMapJson  `json:"-" gorm:"comment:角色;type:varchar(1000)"`
+	Departments rdb.ModeMapJson  `json:"-" gorm:"type:varchar(1024)"`
+	Role        rdb.ModeListJson `json:"role" gorm:"-"`
+	Department  string           `json:"department" gorm:"-"`
 	UUID        string           `gorm:"comment:uuid"`
 	Permissions map[string]bool  `gorm:"-" json:"permission"` // 权限校验
 	Menu        []*menuTree      `gorm:"-" json:"menu"`       // 菜单
@@ -33,16 +37,19 @@ type User struct {
 }
 
 type UserList struct {
-	ID        uint             `json:"id"`
-	Account   string           `json:"account"`
-	NickName  string           `json:"nick_name"`
-	Email     string           `json:"email"`
-	IP        string           `json:"ip"`
-	Super     string           `json:"super"`
-	CreatedAt uint64           `json:"created_at"`
-	Status    int8             `json:"status"`
-	Role      rdb.ModeListJson `json:"role" gorm:"type:varchar(10240)"`
-	Company   rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
+	ID          uint             `json:"id"`
+	Account     string           `json:"account"`
+	NickName    string           `json:"nick_name"`
+	Email       string           `json:"email"`
+	IP          string           `json:"ip"`
+	Super       string           `json:"super"`
+	CreatedAt   uint64           `json:"created_at"`
+	Status      int8             `json:"status"`
+	Roles       rdb.ModeMapJson  `json:"-" gorm:"type:varchar(10240)"`
+	Role        rdb.ModeListJson `json:"role" gorm:"-"`
+	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
+	Departments rdb.ModeMapJson  `json:"-" gorm:"type:varchar(10240)"`
+	Department  string           `json:"department" gorm:"-"`
 }
 
 func (u *User) TableName() string {
@@ -62,6 +69,44 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 
 func (u *User) BeforeUpdate(tx *gorm.DB) error {
 	return u.encodePwd()
+}
+
+func (u *User) AfterFind(tx *gorm.DB) error {
+	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
+	if ok && ci != nil {
+		if u.Departments[ci.(string)] != nil {
+			u.Department = u.Departments[ci.(string)].(string)
+		}
+		if u.Roles[ci.(string)] != nil {
+			u.Role = u.Roles[ci.(string)].([]interface{})
+		}
+	}
+	if u.Departments == nil || len(u.Departments) == 0 {
+		u.Departments = make(rdb.ModeMapJson, 100)
+	}
+	if u.Roles == nil || len(u.Roles) == 0 {
+		u.Roles = make(rdb.ModeMapJson, 100)
+	}
+	return nil
+}
+
+func (u *UserList) AfterFind(tx *gorm.DB) error {
+	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
+	if ok && ci != nil {
+		if u.Departments[ci.(string)] != nil {
+			u.Department = u.Departments[ci.(string)].(string)
+		}
+		if u.Roles[ci.(string)] != nil {
+			u.Role = u.Roles[ci.(string)].([]interface{})
+		}
+	}
+	if u.Departments == nil || len(u.Departments) == 0 {
+		u.Departments = make(rdb.ModeMapJson, 100)
+	}
+	if u.Roles == nil || len(u.Roles) == 0 {
+		u.Roles = make(rdb.ModeMapJson, 100)
+	}
+	return nil
 }
 
 // User模型相关操作

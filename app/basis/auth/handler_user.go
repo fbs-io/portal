@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-10-15 19:28:00
+ * @LastEditTime: 2023-10-31 23:01:33
  * @Description: 用户信息相关接口
  */
 package auth
@@ -81,27 +81,34 @@ func userUpdate() core.HandlerFunc {
 // TODO:补充其他用户信息, 如部门等
 // 设计思路: 用户和员工分开, 用户可以绑定员工, 但员工不一定有登陆账户
 type userAddParams struct {
-	Account  string           `json:"account"`
-	Password string           `json:"password"`
-	NickName string           `json:"nick_name"`
-	Email    string           `json:"email" binding:"omitempty,email"`
-	Super    string           `json:"super"`
-	Company  rdb.ModeListJson `json:"company"`
-	Role     rdb.ModeListJson `json:"role"`
+	Account    string           `json:"account"`
+	Password   string           `json:"password"`
+	NickName   string           `json:"nick_name"`
+	Email      string           `json:"email" binding:"omitempty,email"`
+	Super      string           `json:"super"`
+	Department string           `json:"department"`
+	Company    rdb.ModeListJson `json:"company"`
+	Role       rdb.ModeListJson `json:"role"`
 }
 
 func userAdd() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*userAddParams)
 		tx := ctx.TX()
+		company_code := ""
+		ci, ok := ctx.Ctx().Copy().Get(core.CTX_SHARDING_KEY)
+		if ok {
+			company_code = ci.(string)
+		}
 		user := &User{
-			Account:  param.Account,
-			Password: param.Password,
-			NickName: param.NickName,
-			Email:    param.Email,
-			Super:    param.Super,
-			Role:     param.Role,
-			Company:  param.Company,
+			Account:     param.Account,
+			Password:    param.Password,
+			NickName:    param.NickName,
+			Email:       param.Email,
+			Super:       param.Super,
+			Company:     param.Company,
+			Roles:       map[string]interface{}{company_code: param.Role},
+			Departments: map[string]interface{}{company_code: param.Department},
 		}
 		err := tx.Create(user).Error
 		if err != nil {
@@ -116,35 +123,6 @@ func userAdd() core.HandlerFunc {
 
 	}
 }
-
-// type usersUpdateParams struct {
-
-// 	NickName string           `json:"nick_name" conditions:"-"`
-// 	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
-// 	Super    string           `json:"super" conditions:"-"`
-// 	Status   int8             `json:"status" conditions:"-"`
-// 	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
-// }
-
-// func userUpdate() core.HandlerFunc {
-// 	return func(ctx core.Context) {
-// 		param := ctx.CtxGetParams().(*userUpdateParams)
-// 		tx := ctx.TX()
-
-// 		user := &User{}
-// 		user.NickName = param.NickName
-// 		user.Email = param.Email
-// 		user.Role = param.Role
-// 		user.Account = ctx.Auth()
-// 		user.Status = param.Status
-// 		err := tx.Where("account = (?)", ctx.Auth()).Updates(user).Error
-// 		if err != nil {
-// 			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
-// 			return
-// 		}
-// 		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
-// 	}
-// }
 
 // orders, page_num, page_size 作为保留字段用于条件生成
 type usersQueryParams struct {
@@ -185,36 +163,48 @@ func usersQuery() core.HandlerFunc {
 }
 
 type usersUpdateParams struct {
-	ID       []uint           `json:"id"  binding:"required" conditions:"-"`
-	NickName string           `json:"nick_name" conditions:"-"`
-	Pwd      string           `json:"password" conditions:"-"`
-	Super    string           `json:"super" conditions:"-"`
-	Status   int8             `json:"status" conditions:"-"`
-	Email    string           `json:"email" binding:"omitempty,email" conditions:"-"`
-	Role     rdb.ModeListJson `json:"role" gorm:"type:varchar(1000)" conditions:"-"`
-	Company  rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)" conditions:"-"`
+	ID         []uint           `json:"id"  binding:"required" conditions:"-"`
+	NickName   string           `json:"nick_name" conditions:"-"`
+	Pwd        string           `json:"password" conditions:"-"`
+	Super      string           `json:"super" conditions:"-"`
+	Status     int8             `json:"status" conditions:"-"`
+	Email      string           `json:"email" binding:"omitempty,email" conditions:"-"`
+	Department string           `json:"department" conditions:"-"`
+	Role       rdb.ModeListJson `json:"role" conditions:"-"`
+	Company    rdb.ModeListJson `json:"company" conditions:"-"`
 }
 
 func usersUpdate() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*usersUpdateParams)
 		tx := ctx.TX()
-		user := &User{
-			Role:     param.Role,
-			Super:    param.Super,
-			Password: param.Pwd,
-			NickName: param.NickName,
-			Company:  param.Company,
-			Email:    param.Email,
-		}
-		user.Status = param.Status
-
-		err := tx.Model(user).Where("id in (?)", param.ID).Updates(user).Error
+		users := make([]*User, 0, 100)
+		err := tx.Model(&User{}).Where("id in (?)", param.ID).Find(&users).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
 			return
 		}
-		ctx.JSON(errno.ERRNO_OK.WrapData(user.UserInfo()).Notify())
+		company_code := ""
+		ci, ok := ctx.Ctx().Copy().Get(core.CTX_SHARDING_KEY)
+		if ok && ci != nil {
+			company_code = ci.(string)
+		}
+		for _, user := range users {
+			user.Super = param.Super
+			user.NickName = param.NickName
+			user.Company = param.Company
+			user.Email = param.Email
+			user.Status = param.Status
+			user.Password = param.Pwd
+			user.Roles[company_code] = param.Role
+			user.Departments[company_code] = param.Department
+			err := tx.Model(user).Where("id = (?)", user.ID).Updates(user).Error
+			if err != nil {
+				ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
+				return
+			}
+		}
+		ctx.JSON(errno.ERRNO_OK.Notify())
 	}
 }
 

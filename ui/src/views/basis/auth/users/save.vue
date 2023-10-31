@@ -40,6 +40,19 @@
 			<!-- <el-form-item label="所属部门" prop="dept">
 				<el-cascader v-model="form.dept" :options="depts" :props="deptsProps" clearable style="width: 100%;"></el-cascader>
 			</el-form-item> -->
+			<el-form-item label="所属部门" prop="department">
+				<template #default="scope">
+					<el-tree-select 
+						ref="department" 
+						v-model="form.department"
+						node-key="department_code"
+						:data="department.list" 
+						:props="department.props" 
+						check-strictly
+						:render-after-expand="false"
+					></el-tree-select>
+				</template>
+			</el-form-item>
 			<el-form-item label="所属公司" prop="company">
 				<el-select v-model="form.company" multiple filterable style="width: 100%">
 					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code"/>
@@ -82,8 +95,10 @@
 					dept: "",
 					role: [],
 					company: [],
+					department: "",
 					super:"N",
 					password:"",
+					password2:"",
 					email:"",
 				},
 				//验证规则
@@ -136,10 +151,14 @@
 					multiple: true,
 					checkStrictly: true
 				},
-				depts: [],
-				deptsProps: {
-					value: "id",
-					checkStrictly: true
+				department: {
+					list: [],
+					checked: [],
+					props: {
+						label: (data)=>{
+							return data.department_name
+						},
+					}
 				},
 				supers:[
 					{
@@ -212,8 +231,9 @@
 										avatar: "",
 										nick_name: "",
 										dept: "",
-										role: [],
+										role: "",
 										company:[],
+										department:"",
 										super:"N",
 										email:"",
 									}
@@ -232,6 +252,7 @@
 								role: this.form.role,
 								super: this.form.super,
 								email: this.form.email,
+								department:this.form.department,
 							}
 							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;
@@ -249,6 +270,10 @@
 			setData(data){
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
 				Object.assign(this.form, data)
+			},
+			async getDepartmentTree(){
+				let res = await this.$API.basis_org.department.tree()
+				this.department.list = res.details.rows
 			}
 		}
 	}
