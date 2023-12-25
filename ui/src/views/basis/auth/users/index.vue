@@ -1,5 +1,6 @@
 <template>
-	<el-container>
+	<!-- TODO: 增加部门筛选用户的功能, 需要后端配合更改修改底层逻辑进行处理 -->
+	<!-- <el-container>
 		<el-aside width="200px" v-loading="showGrouploading">
 			<el-container>
 				<el-header>
@@ -11,16 +12,16 @@
 						class="menu" 
 						node-key="department_code" 
 						:data="department" 
-						:props="department_props"
+						:props="departmentProps"
 						:current-node-key="''" 
 						:highlight-current="true" 
 						:expand-on-click-node="false" 
 						:filter-node-method="groupFilterNode" 
-						@node-click="groupClick">
+						@node-click="departmentClick">
 					</el-tree>
 				</el-main>
 			</el-container>
-		</el-aside>
+		</el-aside> -->
 		<el-container>
 				<el-header>
 					<div class="left-panel">
@@ -49,9 +50,10 @@
 						
 						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
-						<el-table-column label="所属公司" prop="company" width="200" sortable='custom' :formatter="formatter" ></el-table-column>
+						<el-table-column label="公司" prop="company" width="200" sortable='custom' :formatter="formatter" ></el-table-column>
 						<el-table-column label="部门" prop="department" width="150" sortable='custom' :formatter="formatter"></el-table-column>
-						<el-table-column label="所属角色" prop="role" width="130" sortable='custom' :formatter="formatter"></el-table-column>
+						<el-table-column label="岗位" prop="position" width="150" sortable='custom' :formatter="formatter"></el-table-column>
+						<el-table-column label="角色" prop="role" width="130" sortable='custom' :formatter="formatter"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
 								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -75,7 +77,7 @@
 					</scTable>
 				</el-main>
 		</el-container>
-	</el-container>
+	<!-- </el-container> -->
 
 	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
 	<role-dialog v-if="dialog.role" ref="roleDialog" @success="handleSuccess" @closed="dialog.role=false"></role-dialog>
@@ -105,7 +107,7 @@
 				showGrouploading: false,
 				groupFilterText: '',
 				department: [],
-				department_props:{
+				departmentProps:{
 					label: (data)=>{
 							return data.department_name
 					},
@@ -134,6 +136,7 @@
 				this.getRoles()
 				this.getCompanies()
 				this.getDepartments()
+				// this.getDepartmentTree()
 
 			},500)
 		},
@@ -159,6 +162,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)
+					this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			select_id(){
@@ -225,7 +229,7 @@
 				this.selection = selection;
 			},
 			//加载树数据
-			async getDepartment(){
+			async getDepartmentTree(){
 				this.showGrouploading = true;
 				var res = await this.$API.basis_org.department.tree();
 				this.showGrouploading = false;
@@ -239,7 +243,7 @@
 				return data.department_name.indexOf(value) !== -1;
 			},
 			//树点击事件
-			groupClick(data){
+			departmentClick(data){
 				var params = {
 					department_code: data.department_code
 				}
@@ -266,12 +270,14 @@
 			},
 			//表格内开关
 			changeSwitch(val, row){
+				// console.log(val)
 				row.status = row.status == 1 ? 1 : -1
 				row.$switch_status = true;
-				setTimeout(()=>{
-					delete row.$switch_status;
-					var res = this.$API.basis_auth.users.edit({id:[row.id],status:row.status});
-				}, 1000)
+				this.$API.basis_auth.users.edit({id:[row.id],status:row.status});
+				// setTimeout(()=>{
+				// 	var res = this.$API.basis_auth.users.edit({id:[row.id],status:row.status});
+				// }, 1000)
+				delete row.$switch_status;
 			},
 
 			async getRoles(){
@@ -299,9 +305,7 @@
 				if (!cols || !filterData){
 					return 
 				}
-				// console.log(cols)
 				if (typeof cols == "string"){
-					console.log(filterData)
 					return filterData[cols]
 				}
 				cols.forEach(item =>{

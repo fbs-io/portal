@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-10-31 22:57:27
+ * @LastEditTime: 2023-12-24 15:02:45
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -148,4 +148,16 @@ func (user *User) chpwd(param *userChPwdParams) (err error) {
 	}
 	user.Password = param.NewPwd
 	return
+}
+
+// 用户和岗位关系表
+type RlatUserPosition struct {
+	Account      string `gorm:"comment:用户code;index"`
+	PositionCode string `gorm:"comment:岗位code;index"`
+	rdb.Model
+	rdb.ShardingModel
+}
+
+func (model *RlatUserPosition) TableName() string {
+	return consts.TABLE_BASIS_RLAT_USER_POSITION
 }

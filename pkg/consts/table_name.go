@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 19:26:52
  * @LastEditors: reel
- * @LastEditTime: 2023-10-28 10:27:06
+ * @LastEditTime: 2023-12-24 14:24:00
  * @Description: 请填写简介
  */
 package consts
@@ -11,10 +11,15 @@ const (
 	// 组织表
 	TABLE_BASIS_ORG_COMPANY    = "e_basis_org_company"
 	TABLE_BASIS_ORG_DEPARTMENT = "e_basis_org_department"
+	TABLE_BASIS_ORG_POSITION   = "e_basis_org_position"
 
 	// 基础配置表
 	TABLE_BASIS_AUTH_ROLE = "e_basis_auth_role"
 	TABLE_BASIS_AUTH_USER = "e_basis_auth_user"
+
+	// 关系表
+	TABLE_BASIS_RLAT_USER_POSITION = "e_basis_rlat_user_position" // 岗位和用户的关系表
+
 )
 
 var (

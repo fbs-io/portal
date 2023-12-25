@@ -3,17 +3,20 @@
 	<template v-if="layout=='header'">
 		<header class="adminui-header">
 			<div class="adminui-header-left">
-				<div class="logo-bar" style="width: 25em;">
+				<div class="logo-bar" style="width: 30em;">
 					<img class="logo" src="/website/img/logo.png">
 					<span v-if="companies.length<=1">{{ company }}</span>
 					<el-dropdown  v-if="companies.length>1" class="" trigger="click" @command="selectCompany">
-							<span class="adminui-header adminui-header-left logo-bar">{{ company }}</span>
+							<span class="adminui-header adminui-header-left logo-bar"
+
+							>{{ company }}</span>
 						<template #dropdown>
 							<el-dropdown-menu>
-								<el-dropdown-item v-for="item in companies" :command="item.company_code">{{ item.company_name }}</el-dropdown-item>
+								<el-dropdown-item v-for="item in companies" :command="item.company_code">{{ (item.company_short_name!="") ? item.company_short_name : item.company_name}}</el-dropdown-item>
 							</el-dropdown-menu>
 						</template>
 					</el-dropdown>
+					
 				</div>
 				<ul v-if="!ismobile" class="nav">
 					<li v-for="item in menu" :key="item" :class="pmenu.path==item.path?'active':''" @click="showMenu(item)">
@@ -328,6 +331,9 @@
 					this.companies.forEach(item=>{
 						if (item.company_code == company_code){
 							this.company = item.company_name
+							if (item.company_short_name != ""){
+								this.company = item.company_short_name
+							}
 						}
 						if (this.company == ""){
 							this.company = "Default"

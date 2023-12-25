@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-10-19 07:37:25
+ * @LastEditTime: 2023-12-20 23:06:46
  * @Description: 请填写简介
  */
 package auth
@@ -93,7 +93,7 @@ func getCompany() core.HandlerFunc {
 		if user.Super != "Y" {
 			tx = tx.Where(`company_code in ?`, companies)
 		}
-		tx.Select("company_code", "company_name").Find(&result)
+		tx.Select("company_code", "company_name", "company_short_name").Find(&result)
 		company_code := ctx.Core().Cache().Get(consts.GenUserCompanyKey(user.Account))
 		var isCheck = false
 		if len(result) > 0 {

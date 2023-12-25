@@ -67,4 +67,4 @@ require (
 	gorm.io/driver/sqlite v1.5.0 // indirect
 )
 
-// replace github.com/fbs-io/core => ../core
+replace github.com/fbs-io/core => ../core

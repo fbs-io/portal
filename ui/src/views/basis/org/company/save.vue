@@ -3,7 +3,7 @@
 		<el-tabs tab-position="top">
 			<el-tab-pane label="角色基本信息">
 				<el-form :model="form" :rules="rules" :disabled="mode=='show'" ref="dialogForm" label-width="100px" label-position="left">
-					<el-form-item label="公司代码" prop="company_code">
+					<el-form-item label="公司代码" :disabled="mode=='edit'" prop="company_code">
 						<el-input v-model="form.company_code" clearable placeholder="为空则自动生产代码"></el-input>
 					</el-form-item>
 					<el-form-item label="公司名称" prop="company_name">

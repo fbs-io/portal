@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-20 06:15:08
+ * @LastEditTime: 2023-11-19 20:54:46
  * @Description: 请填写简介
  */
 package auth
@@ -50,7 +50,7 @@ func GetUser(auth string, ctx core.Context, refresh int8) (user *User) {
 			if err != nil {
 				return nil
 			}
-			user.Menu, user.Permissions, _ = getMenuTree(ctx, auth, QUERY_MENU_MODE_INFO)
+			user.Menu, user.Permissions, _ = getMenuTree(ctx, user, QUERY_MENU_MODE_INFO)
 		}
 	}
 
@@ -70,7 +70,7 @@ func GetUser(auth string, ctx core.Context, refresh int8) (user *User) {
 			ctx.CtxSet(core.CTX_SHARDING_KEY, user.Company[0].(string))
 		}
 		if refresh == REFRESH_ALL || user.Permissions == nil {
-			user.Menu, user.Permissions, _ = getMenuTree(ctx, auth, QUERY_MENU_MODE_INFO)
+			user.Menu, user.Permissions, _ = getMenuTree(ctx, user, QUERY_MENU_MODE_INFO)
 		}
 	}
 	return

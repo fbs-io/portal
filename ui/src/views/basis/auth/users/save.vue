@@ -37,21 +37,26 @@
 					 <el-option v-for="item in supers" :key="item.value" :label="item.label" :value="item.value"/>
 				</el-select>
 			</el-form-item>
-			<!-- <el-form-item label="所属部门" prop="dept">
-				<el-cascader v-model="form.dept" :options="depts" :props="deptsProps" clearable style="width: 100%;"></el-cascader>
-			</el-form-item> -->
-			<el-form-item label="所属部门" prop="department">
+			<el-form-item label="主要岗位" prop="dept">
+				<el-cascader v-model="form.position" :options="positions" :props="positionsProps" clearable style="width: 100%;"></el-cascader>
+			</el-form-item>
+			<!-- <el-form-item label="所属岗位" prop="position">
 				<template #default="scope">
 					<el-tree-select 
-						ref="department" 
-						v-model="form.department"
-						node-key="department_code"
-						:data="department.list" 
-						:props="department.props" 
+						ref="position" 
+						v-model="form.position"
+						node-key="position_code"
+						:data="position.list" 
+						:props="position.props" 
 						check-strictly
 						:render-after-expand="false"
 					></el-tree-select>
 				</template>
+			</el-form-item> -->
+			<el-form-item label="兼职岗位" prop="company">
+				<el-select v-model="form.company" multiple filterable style="width: 100%">
+					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code"/>
+				</el-select>
 			</el-form-item>
 			<el-form-item label="所属公司" prop="company">
 				<el-select v-model="form.company" multiple filterable style="width: 100%">
@@ -95,7 +100,7 @@
 					dept: "",
 					role: [],
 					company: [],
-					department: "",
+					position: "",
 					super:"N",
 					password:"",
 					password2:"",
@@ -131,8 +136,8 @@
 							}
 						}}
 					],
-					dept: [
-						{required: true, message: '请选择所属部门'}
+					position: [
+						{required: true, message: '请选择所属岗位'}
 					],
 					group: [
 						{required: true, message: '请选择所属角色', trigger: 'change'}
@@ -151,12 +156,12 @@
 					multiple: true,
 					checkStrictly: true
 				},
-				department: {
+				position: {
 					list: [],
 					checked: [],
 					props: {
 						label: (data)=>{
-							return data.department_name
+							return data.position_name
 						},
 					}
 				},
@@ -183,9 +188,6 @@
 			}
 		},
 		mounted() {
-			
-
-			// this.getDept()
 		},
 		methods: {
 			//显示
@@ -193,10 +195,10 @@
 				this.mode = mode;
 				this.visible = true;
 				
-				if (this.mode!="show"){
-					this.getRoles()
-					this.getCompanies()
-				}
+				// if (this.mode!="show"){
+				this.getRoles()
+				this.getCompanies()
+				// }
 				return this
 			},
 			//加载树数据
@@ -271,10 +273,7 @@
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
 				Object.assign(this.form, data)
 			},
-			async getDepartmentTree(){
-				let res = await this.$API.basis_org.department.tree()
-				this.department.list = res.details.rows
-			}
+
 		}
 	}
 </script>
