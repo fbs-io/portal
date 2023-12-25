@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-21 22:20:41
  * @LastEditors: reel
- * @LastEditTime: 2023-12-25 20:34:18
+ * @LastEditTime: 2023-12-25 23:19:44
  * @Description: 岗位操作, 通过岗位定位用户权限, 如果没有权限, 则只能看到自己所属的内容
  */
 package org
@@ -120,9 +120,9 @@ func positionEdit() core.HandlerFunc {
 		if model.PositionParentCode != "" {
 			tx := ctx.NewTX()
 			pmodel := &Position{}
-			err := tx.Table(model.TableName()).Where("department_code = ? and status = 1", model.PositionParentCode).First(pmodel).Error
+			err := tx.Table(model.TableName()).Where("position_code = ? and status = 1", model.PositionParentCode).First(pmodel).Error
 			if err != nil || pmodel.DepartmentCode == "" {
-				ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无有效的上级code")))
+				ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无有效的上级岗位code")))
 				return
 			}
 		}

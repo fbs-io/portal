@@ -14,15 +14,13 @@
 					</el-form-item>
 					<el-form-item label="上级岗位" prop="position_parent_code">
 						<template #default="scope">
-							<el-tree-select 
+							<el-select 
 								ref="position" 
+								filterable
 								v-model="form.position_parent_code"
-								node-key="position_code"
-								:data="position.list" 
-								:props="position.props" 
-								check-strictly
-								:render-after-expand="false"
-							></el-tree-select>
+							>
+								<el-option v-for="item in position.list" :label="item.name" :value="item.code"/>
+							</el-select>
 						</template>
 					
 					</el-form-item>
@@ -131,7 +129,7 @@
 					checked: [],
 					props: {
 						label: (data)=>{
-							return data.position_name
+							return data.name
 						},
 					}
 				},
@@ -147,7 +145,7 @@
 			}
 		},
 		mounted() {
-			// this.getDepartmentTree()
+			this.getPosition()
 		},
 		methods: {
 			//显示
@@ -227,6 +225,13 @@
 						return false;
 					}
 				})
+			},
+			async getPosition(){
+				var res = await this.$API.common.dimension.get({dim_type:"position"});
+				this.position.list = res.details
+				// res.details.forEach(item=>{
+				// 	this.formatData.position[item.code] =item.name
+				// })
 			},
 			//表单注入数据
 			setData(data){
