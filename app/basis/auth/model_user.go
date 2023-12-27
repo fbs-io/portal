@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-12-24 15:02:45
+ * @LastEditTime: 2023-12-27 23:21:08
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -37,19 +37,21 @@ type User struct {
 }
 
 type UserList struct {
-	ID          uint             `json:"id"`
-	Account     string           `json:"account"`
-	NickName    string           `json:"nick_name"`
-	Email       string           `json:"email"`
-	IP          string           `json:"ip"`
-	Super       string           `json:"super"`
-	CreatedAt   uint64           `json:"created_at"`
-	Status      int8             `json:"status"`
-	Roles       rdb.ModeMapJson  `json:"-" gorm:"type:varchar(10240)"`
-	Role        rdb.ModeListJson `json:"role" gorm:"-"`
-	Company     rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
-	Departments rdb.ModeMapJson  `json:"-" gorm:"type:varchar(10240)"`
-	Department  string           `json:"department" gorm:"-"`
+	ID         uint             `json:"id"`
+	Account    string           `json:"account"`
+	NickName   string           `json:"nick_name"`
+	Email      string           `json:"email"`
+	IP         string           `json:"ip"`
+	Super      string           `json:"super"`
+	CreatedAt  uint64           `json:"created_at"`
+	Status     int8             `json:"status"`
+	Position1  string           `json:"position1" gorm:"-"` //主岗
+	Position2  rdb.ModeListJson `json:"position2" gorm:"-"` //兼岗
+	Position   rdb.ModeListJson `json:"position" gorm:"-"`  //所有岗位
+	Roles      rdb.ModeMapJson  `json:"-" gorm:"type:varchar(10240)"`
+	Role       rdb.ModeListJson `json:"role" gorm:"-"`
+	Company    rdb.ModeListJson `json:"company" gorm:"type:varchar(10240)"`
+	Department rdb.ModeListJson `json:"department" gorm:"-"`
 }
 
 func (u *User) TableName() string {
@@ -91,18 +93,18 @@ func (u *User) AfterFind(tx *gorm.DB) error {
 }
 
 func (u *UserList) AfterFind(tx *gorm.DB) error {
-	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
-	if ok && ci != nil {
-		if u.Departments[ci.(string)] != nil {
-			u.Department = u.Departments[ci.(string)].(string)
-		}
-		if u.Roles[ci.(string)] != nil {
-			u.Role = u.Roles[ci.(string)].([]interface{})
-		}
-	}
-	if u.Departments == nil || len(u.Departments) == 0 {
-		u.Departments = make(rdb.ModeMapJson, 100)
-	}
+	// ci, ok := tx.Get(core.CTX_SHARDING_KEY)
+	// if ok && ci != nil {
+	// 	if u.Departments[ci.(string)] != nil {
+	// 		u.Department = u.Departments[ci.(string)].(string)
+	// 	}
+	// 	if u.Roles[ci.(string)] != nil {
+	// 		u.Role = u.Roles[ci.(string)].([]interface{})
+	// 	}
+	// }
+	// if u.Departments == nil || len(u.Departments) == 0 {
+	// 	u.Departments = make(rdb.ModeMapJson, 100)
+	// }
 	if u.Roles == nil || len(u.Roles) == 0 {
 		u.Roles = make(rdb.ModeMapJson, 100)
 	}
@@ -151,9 +153,11 @@ func (user *User) chpwd(param *userChPwdParams) (err error) {
 }
 
 // 用户和岗位关系表
+// TODO: 用户和员工拆分开, 岗位和员工关联
 type RlatUserPosition struct {
 	Account      string `gorm:"comment:用户code;index"`
 	PositionCode string `gorm:"comment:岗位code;index"`
+	IsPosition   int8   `gorm:"comment:是否主岗"`
 	rdb.Model
 	rdb.ShardingModel
 }

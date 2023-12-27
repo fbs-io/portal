@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-11-19 20:54:46
+ * @LastEditTime: 2023-12-26 22:53:08
  * @Description: 请填写简介
  */
 package auth
@@ -112,6 +112,7 @@ func New(route core.RouterGroup) {
 	r := &Role{}
 	// tx.Register(r).AddShardingTable(r.TableName())
 	tx.Register(r)
+	tx.Register(&RlatUserPosition{})
 
 	auth := route.Group("auth", "用户中心").WithMeta("icon", "el-icon-stamp")
 	// 用户个人信息操作

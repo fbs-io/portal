@@ -50,10 +50,10 @@
 						
 						<el-table-column label="登录账号" prop="account" width="130" sortable='custom' column-key="super" :filters="[{text: '管理账户', value: 'Y'}, {text: '普通账户', value: 'N'}]"></el-table-column>
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
-						<el-table-column label="公司" prop="company" width="200" sortable='custom' :formatter="formatter" ></el-table-column>
-						<el-table-column label="部门" prop="department" width="150" sortable='custom' :formatter="formatter"></el-table-column>
-						<el-table-column label="岗位" prop="position" width="150" sortable='custom' :formatter="formatter"></el-table-column>
-						<el-table-column label="角色" prop="role" width="130" sortable='custom' :formatter="formatter"></el-table-column>
+						<el-table-column label="公司" prop="company" width="200" :formatter="formatter" ></el-table-column>
+						<el-table-column label="部门" prop="department" width="150" :formatter="formatter"></el-table-column>
+						<el-table-column label="岗位" prop="position" width="150" :formatter="formatter"></el-table-column>
+						<el-table-column label="角色" prop="role" width="130"  :formatter="formatter"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
 								<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -121,6 +121,7 @@
 					role:{},
 					company:{},
 					department:{},
+					position:{}
 				},
 				auth:{}
 			}
@@ -136,7 +137,7 @@
 				this.getRoles()
 				this.getCompanies()
 				this.getDepartments()
-				// this.getDepartmentTree()
+				this.getPositions()
 
 			},500)
 		},
@@ -154,7 +155,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('edit').setData(row)
-					this.$refs.saveDialog.getDepartmentTree()
+					// this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			//查看
@@ -162,7 +163,7 @@
 				this.dialog.save = true
 				this.$nextTick(() => {
 					this.$refs.saveDialog.open('show').setData(row)
-					this.$refs.saveDialog.getDepartmentTree()
+					// this.$refs.saveDialog.getDepartmentTree()
 				})
 			},
 			select_id(){
@@ -296,6 +297,12 @@
 				var res = await this.$API.common.dimension.get({dim_type:"department"});
 				res.details.forEach(item=>{
 					this.formatData.department[item.code] =item.name
+				})
+			},
+			async getPositions(){
+				var res = await this.$API.common.dimension.get({dim_type:"position"});
+				res.details.forEach(item=>{
+					this.formatData.position[item.code] =item.name
 				})
 			},
 			formatter(row,column,cols){

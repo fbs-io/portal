@@ -37,26 +37,29 @@
 					 <el-option v-for="item in supers" :key="item.value" :label="item.label" :value="item.value"/>
 				</el-select>
 			</el-form-item>
-			<el-form-item label="主要岗位" prop="dept">
-				<el-cascader v-model="form.position" :options="positions" :props="positionsProps" clearable style="width: 100%;"></el-cascader>
-			</el-form-item>
-			<!-- <el-form-item label="所属岗位" prop="position">
+			<el-form-item label="主要岗位" prop="position1">
 				<template #default="scope">
-					<el-tree-select 
+					<el-select 
 						ref="position" 
-						v-model="form.position"
-						node-key="position_code"
-						:data="position.list" 
-						:props="position.props" 
-						check-strictly
-						:render-after-expand="false"
-					></el-tree-select>
+						filterable
+						v-model="form.position1"
+					>
+						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="form.position2.indexOf(item.code)>-1"/>
+					</el-select>
 				</template>
-			</el-form-item> -->
-			<el-form-item label="兼职岗位" prop="company">
-				<el-select v-model="form.company" multiple filterable style="width: 100%">
-					<el-option v-for="item in companies" :key="item.company_code" :label="item.company_name" :value="item.company_code"/>
-				</el-select>
+			</el-form-item>
+
+			<el-form-item label="兼职岗位" prop="position2">
+				<template #default="scope">
+					<el-select 
+						ref="position2" 
+						filterable
+						multiple
+						v-model="form.position2"
+					>
+						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="item.code==form.position"/>
+					</el-select>
+				</template>
 			</el-form-item>
 			<el-form-item label="所属公司" prop="company">
 				<el-select v-model="form.company" multiple filterable style="width: 100%">
@@ -100,7 +103,8 @@
 					dept: "",
 					role: [],
 					company: [],
-					position: "",
+					position1: "",
+					position2: [],
 					super:"N",
 					password:"",
 					password2:"",
@@ -189,6 +193,14 @@
 		},
 		mounted() {
 		},
+		// watch: {
+		// 	form:{
+		// 		handler(val,oval){
+		// 			console.log(val,oval)
+		// 		},
+		// 		deep:true
+		// 	}
+		// },
 		methods: {
 			//显示
 			open(mode='add'){
@@ -196,8 +208,9 @@
 				this.visible = true;
 				
 				// if (this.mode!="show"){
-				this.getRoles()
-				this.getCompanies()
+					this.getRoles()
+					this.getCompanies()
+					this.getPositions()
 				// }
 				return this
 			},
@@ -210,9 +223,9 @@
 				var res = await this.$API.basis_org.company.list({page_num:-1,page_size:-1});
 				this.companies = res.details.rows;
 			},
-			async getDept(){
-				// var res = await this.$API.system.dept.list.get();
-				// this.depts = res.data;
+			async getPositions(){
+				var res = await this.$API.common.dimension.get({dim_type:"position"});
+				this.position.list = res.details
 			},
 			//表单提交方法
 			submit(isNext){
@@ -238,6 +251,9 @@
 										department:"",
 										super:"N",
 										email:"",
+										position1:"",
+										position:"",
+										position2:"",
 									}
 								}else{
 									this.visible = false;
@@ -254,7 +270,8 @@
 								role: this.form.role,
 								super: this.form.super,
 								email: this.form.email,
-								department:this.form.department,
+								position1:this.form.position1,
+								position2:this.form.position2,
 							}
 							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;

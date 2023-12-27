@@ -229,9 +229,6 @@
 			async getPosition(){
 				var res = await this.$API.common.dimension.get({dim_type:"position"});
 				this.position.list = res.details
-				// res.details.forEach(item=>{
-				// 	this.formatData.position[item.code] =item.name
-				// })
 			},
 			//表单注入数据
 			setData(data){
