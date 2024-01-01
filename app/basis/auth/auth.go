@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-12-26 22:53:08
+ * @LastEditTime: 2023-12-30 20:59:23
  * @Description: 请填写简介
  */
 package auth
@@ -67,7 +67,9 @@ func GetUser(auth string, ctx core.Context, refresh int8) (user *User) {
 		// 继续判断是否有分区code, 如果无法从上下文获取code
 		// 则尝试使用用户自带公司列表的第一个值作为公司code用于分区传递给上下文
 		if ctx.CtxGet(core.CTX_SHARDING_KEY) == nil && user.Company != nil && len(user.Company) > 0 {
-			ctx.CtxSet(core.CTX_SHARDING_KEY, user.Company[0].(string))
+			if len(user.Company) > 0 && user.Company[0] != nil {
+				ctx.CtxSet(core.CTX_SHARDING_KEY, user.Company[0].(string))
+			}
 		}
 		if refresh == REFRESH_ALL || user.Permissions == nil {
 			user.Menu, user.Permissions, _ = getMenuTree(ctx, user, QUERY_MENU_MODE_INFO)
@@ -132,7 +134,8 @@ func New(route core.RouterGroup) {
 		// 个人用户修改信息不受限
 		info.POST("update", "更新账户", userUpdateParams{}, userUpdate()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 		// 设置/切换公司
-		info.POST("default_company", "更新账户", setDefaultCompanyParams{}, setDefaultCompany()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
+		info.POST("default_company", "设置所在公司", setDefaultCompanyParams{}, setDefaultCompany()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
+		info.POST("default_position", "设置所在岗位", setDefaultPositionParams{}, setDefaultPosition()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 	}
 
 	// 用户列表管理, 用于批量管理用户

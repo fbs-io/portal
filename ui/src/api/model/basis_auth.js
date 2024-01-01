@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 08:35:55
  * @LastEditors: reel
- * @LastEditTime: 2023-10-17 22:05:08
+ * @LastEditTime: 2023-12-30 20:52:30
  * @Description: 请填写简介
  */
 import config from "@/config"
@@ -52,6 +52,13 @@ export default {
 		setDefaultCompany:{
 			url: `${config.API_URL}/basis/auth/user/default_company`,
 			name: "切换公司",
+			post:async function(data={}){
+				return await http.post(this.url, data);
+			}
+		},
+		setDefaultPosition:{
+			url: `${config.API_URL}/basis/auth/user/default_position`,
+			name: "切换岗位",
 			post:async function(data={}){
 				return await http.post(this.url, data);
 			}

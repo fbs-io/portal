@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 20:14:52
  * @LastEditors: reel
- * @LastEditTime: 2023-12-21 22:19:57
+ * @LastEditTime: 2023-12-31 16:40:53
  * @Description: 法人管理
  */
 package org
@@ -11,7 +11,6 @@ import (
 	"portal/pkg/consts"
 
 	"github.com/fbs-io/core/store/rdb"
-	"gorm.io/gorm"
 )
 
 type Company struct {
@@ -27,12 +26,12 @@ func (o *Company) TableName() string {
 	return consts.TABLE_BASIS_ORG_COMPANY
 }
 
-func (o *Company) BeforeCreate(tx *gorm.DB) error {
-	o.Model.BeforeCreate(tx)
-	return nil
-}
+// func (o *Company) BeforeCreate(tx *gorm.DB) error {
+// 	o.Model.BeforeCreate(tx)
+// 	return nil
+// }
 
-func (o *Company) BeforeUpdate(tx *gorm.DB) error {
-	o.Model.BeforeUpdate(tx)
-	return nil
-}
+// func (o *Company) BeforeUpdate(tx *gorm.DB) error {
+// 	o.Model.BeforeUpdate(tx)
+// 	return nil
+// }

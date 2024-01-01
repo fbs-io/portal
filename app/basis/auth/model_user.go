@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2023-12-27 23:21:08
+ * @LastEditTime: 2023-12-31 23:01:14
  * @Description: 用户表,管理用户信息
  */
 package auth
@@ -76,9 +76,6 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 func (u *User) AfterFind(tx *gorm.DB) error {
 	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
 	if ok && ci != nil {
-		if u.Departments[ci.(string)] != nil {
-			u.Department = u.Departments[ci.(string)].(string)
-		}
 		if u.Roles[ci.(string)] != nil {
 			u.Role = u.Roles[ci.(string)].([]interface{})
 		}
@@ -93,18 +90,12 @@ func (u *User) AfterFind(tx *gorm.DB) error {
 }
 
 func (u *UserList) AfterFind(tx *gorm.DB) error {
-	// ci, ok := tx.Get(core.CTX_SHARDING_KEY)
-	// if ok && ci != nil {
-	// 	if u.Departments[ci.(string)] != nil {
-	// 		u.Department = u.Departments[ci.(string)].(string)
-	// 	}
-	// 	if u.Roles[ci.(string)] != nil {
-	// 		u.Role = u.Roles[ci.(string)].([]interface{})
-	// 	}
-	// }
-	// if u.Departments == nil || len(u.Departments) == 0 {
-	// 	u.Departments = make(rdb.ModeMapJson, 100)
-	// }
+	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
+
+	if ok && u.Roles[ci.(string)] != nil {
+		u.Role = u.Roles[ci.(string)].([]interface{})
+	}
+
 	if u.Roles == nil || len(u.Roles) == 0 {
 		u.Roles = make(rdb.ModeMapJson, 100)
 	}

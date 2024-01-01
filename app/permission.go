@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2023-10-19 06:23:30
+ * @LastEditTime: 2023-12-31 13:32:49
  * @Description: 权限校验中间件
  */
 package app
@@ -10,11 +10,13 @@ package app
 import (
 	"fmt"
 	"portal/app/basis/auth"
+	"portal/app/basis/org"
 	"portal/pkg/consts"
 	"strings"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
+	"github.com/fbs-io/core/store/rdb"
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,6 +47,36 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 		user := auth.GetUser(account, core.NewCtx(c, ctx), auth.REFRESH_NOT)
 		auth.SetUser(user.Account, user)
 		permissionKey := genPermissionKey(ctx)
+
+		// 处理数据权限
+		position_code := c.Cache().Get(consts.GenUserPositionKey(user.Account, company))
+		dp := &rdb.DataPermissionStringCtx{
+			DataPermissionType: rdb.DATA_PERMISSION_ONESELF,
+		}
+
+		if position_code != "" {
+			position := org.GetPosition(company, position_code, *c.RDB().DB())
+			if position != nil {
+				// 设置用户所在岗位的部门(数据权限)以及设置数据权限类型
+				dp.DataPermission = position.DepartmentCode
+				dp.DataPermissionType = position.DataPermissionType
+				dp.DataPermissionScope = make([]string, 0, 100)
+				switch position.DataPermissionType {
+
+				// 数据权限: 当前部门及子部门可见
+				case rdb.DATA_PERMISSION_ONLY_DEPT_ALL:
+					depts := org.GetDeptAndAllChildren(company, position.DepartmentCode, c.RDB().DB())
+					for key := range depts {
+						dp.DataPermissionScope = append(dp.DataPermissionScope, key)
+					}
+				case rdb.DATA_PERMISSION_ONLY_CUSTOM:
+					for _, dept_code := range position.DataPermissionCustom {
+						dp.DataPermissionScope = append(dp.DataPermissionScope, dept_code.(string))
+					}
+				}
+			}
+		}
+		ctx.Set(core.CTX_DATA_PERMISSION_KEY, dp)
 		if user.Permissions[permissionKey] {
 			ctx.Next()
 			return

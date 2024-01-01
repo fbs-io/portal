@@ -138,7 +138,6 @@
 					if (valid) {
 						this.isSaveing = true;
 						this.form.sources = this.$refs.menu.getCheckedKeys().concat(this.$refs.menu.getHalfCheckedKeys())
-						this.form.data_permission_custom = this.$refs.dept.getCheckedKeys().concat(this.$refs.dept.getHalfCheckedKeys())
 						if (this.mode=="add"){
 							this.form.data_permission_type=Number(this.form.data_permission_type)
 							var res = await this.$API.basis_auth.roles.add(this.form);

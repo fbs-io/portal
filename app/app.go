@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-10-17 07:30:01
+ * @LastEditTime: 2023-12-31 20:57:03
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"portal/app/basis"
+	"portal/app/financial"
 	"portal/ui/dist"
 
 	"github.com/fbs-io/core"
@@ -70,4 +71,7 @@ func New(c core.Core) {
 
 	// 初始化basis模块
 	basis.New(ajax)
+
+	// 初始化财务模块
+	financial.New(ajax)
 }

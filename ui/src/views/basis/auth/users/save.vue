@@ -57,7 +57,7 @@
 						multiple
 						v-model="form.position2"
 					>
-						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="item.code==form.position"/>
+						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="item.code==form.position1"/>
 					</el-select>
 				</template>
 			</el-form-item>
@@ -212,6 +212,9 @@
 					this.getCompanies()
 					this.getPositions()
 				// }
+				if (mode=='add'){
+					this.getAllowCompany()
+				}
 				return this
 			},
 			//加载树数据
@@ -226,6 +229,11 @@
 			async getPositions(){
 				var res = await this.$API.common.dimension.get({dim_type:"position"});
 				this.position.list = res.details
+			},
+			async getAllowCompany(){
+				var user  = this.$TOOL.data.get("USER_INFO")
+				var res = await this.$API.basis_auth.user.getAllowCompany.get({account:user.account})
+				this.form.company.push(res.details.company)
 			},
 			//表单提交方法
 			submit(isNext){

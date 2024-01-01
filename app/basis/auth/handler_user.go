@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-19 17:38:01
  * @LastEditors: reel
- * @LastEditTime: 2023-12-27 23:32:46
+ * @LastEditTime: 2023-12-30 22:42:18
  * @Description: 用户信息相关接口
  */
 package auth
@@ -89,7 +89,7 @@ type userAddParams struct {
 	NickName  string           `json:"nick_name"`
 	Email     string           `json:"email" binding:"omitempty,email"`
 	Super     string           `json:"super"`
-	Position  string           `json:"position" conditions:"-"`  // 主岗
+	Position1 string           `json:"position1" conditions:"-"` // 主岗
 	Position2 []string         `json:"position2" conditions:"-"` // 兼岗
 	Company   rdb.ModeListJson `json:"company"`
 	Role      rdb.ModeListJson `json:"role"`
@@ -101,7 +101,7 @@ func userAdd() core.HandlerFunc {
 		tx := ctx.TX()
 		company_code := ""
 		ci, ok := ctx.Ctx().Copy().Get(core.CTX_SHARDING_KEY)
-		if ok {
+		if ok && ci != nil {
 			company_code = ci.(string)
 		}
 		rups := make([]*RlatUserPosition, 0, 10)
@@ -117,10 +117,10 @@ func userAdd() core.HandlerFunc {
 			// Departments: map[string]interface{}{company_code: param.Department},
 		}
 		// 主岗
-		if param.Position != "" {
+		if param.Position1 != "" {
 			rups = append(rups, &RlatUserPosition{
 				Account:      user.Account,
-				PositionCode: param.Position,
+				PositionCode: param.Position1,
 				IsPosition:   1,
 			})
 		}
@@ -147,7 +147,7 @@ func userAdd() core.HandlerFunc {
 		if len(rups) > 0 {
 			tx = ctx.NewTX()
 			tx.Begin()
-			err = tx.Model(&RlatUserPosition{}).Where("account in = ?", param.Account).Delete(&RlatUserPosition{}).Error
+			err = tx.Model(&RlatUserPosition{}).Where("account = ?", param.Account).Delete(&RlatUserPosition{}).Error
 			if err != nil {
 				ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(errorx.Wrap(err, "更新岗位失败")).Notify())
 				return

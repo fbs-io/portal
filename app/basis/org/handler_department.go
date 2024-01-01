@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-10-28 10:29:01
  * @LastEditors: reel
- * @LastEditTime: 2023-12-24 17:56:03
+ * @LastEditTime: 2023-12-31 09:44:47
  * @Description: 部门操作
  */
 package org
@@ -147,7 +147,7 @@ func getDepartmentTree() core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
 		}
-		modelTree, _ := genDepartmentTree(modelList)
+		modelTree, _, _, _ := GenDepartmentTree(modelList)
 		data := map[string]interface{}{
 			"page_num":  param.PageNum,
 			"page_size": param.PageSize,
