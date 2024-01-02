@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-10-28 10:29:01
  * @LastEditors: reel
- * @LastEditTime: 2023-10-29 13:53:28
+ * @LastEditTime: 2023-12-31 09:44:47
  * @Description: 部门操作
  */
 package org
@@ -59,7 +59,7 @@ func departmentAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 }
 
 type departmentEditParams struct {
-	ID                    []uint `json:"id" binding:"required"`
+	ID                    []uint `json:"id" binding:"required" conditions:"-"`
 	DepartmentName        string `json:"department_name" conditions:"-"`
 	DepartmentComment     string `json:"department_comment" conditions:"-"`
 	DepartmentParentCode  string `json:"department_parent_code" conditions:"-"`
@@ -84,11 +84,10 @@ func departmentEdit() core.HandlerFunc {
 			pmodel := &Department{}
 			err := tx.Table(model.TableName()).Where("department_code = ? and status = 1", model.DepartmentParentCode).First(pmodel).Error
 			if err != nil || pmodel.DepartmentCode == "" {
-				ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无有效的父级code")))
+				ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无有效的上级code")))
 				return
 			}
 		}
-
 		err := ctx.TX().Where("id in (?) ", param.ID).Updates(model).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
@@ -148,7 +147,7 @@ func getDepartmentTree() core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
 		}
-		modelTree, _ := genDepartmentTree(modelList)
+		modelTree, _, _, _ := GenDepartmentTree(modelList)
 		data := map[string]interface{}{
 			"page_num":  param.PageNum,
 			"page_size": param.PageSize,

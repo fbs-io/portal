@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 21:26:33
  * @LastEditors: reel
- * @LastEditTime: 2023-10-29 15:59:16
+ * @LastEditTime: 2024-01-02 22:55:48
  * @Description: 请填写简介
  */
 package org
@@ -17,11 +17,14 @@ func New(route core.RouterGroup) {
 	tx := route.Core().RDB()
 	tx.Register(&Company{})
 	tx.Register(&Department{})
+	tx.Register(&Position{})
 
 	// 公司code生成器
 	companySeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("C"))
 	// 组织code生成器
 	departmentSeq := sequence.New(route.Core(), "org_company_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("D"))
+	// 岗位code生成器
+	positionSeq := sequence.New(route.Core(), "org_position_sequence", sequence.SetDateFormat(""), sequence.SetPrefix("P"))
 
 	orgGroup := route.Group("org", "组织管理").WithMeta("icon", "sc-icon-organization")
 
@@ -34,6 +37,7 @@ func New(route core.RouterGroup) {
 		company.DELETE("delete", "删除公司", companyDeleteParams{}, companyDelete())
 	}
 
+	// 部门管理相关
 	department := orgGroup.Group("department", "部门管理").WithMeta("icon", "sc-icon-organization")
 	{
 		// 获取部门列表
@@ -43,5 +47,14 @@ func New(route core.RouterGroup) {
 		department.PUT("add", "新增部门", departmentAddParams{}, departmentAdd(departmentSeq))
 		department.POST("edit", "修改部门", departmentEditParams{}, departmentEdit())
 		department.DELETE("delete", "删除部门", departmentDeleteParams{}, departmentDelete())
+	}
+
+	// 岗位管理相关
+	position := orgGroup.Group("position", "岗位管理").WithMeta("icon", "sc-icon-position")
+	{
+		position.GET("list", "岗位列表", positionQueryParams{}, positionList())
+		position.PUT("add", "新增岗位", positionAddParams{}, positionAdd(positionSeq))
+		position.POST("edit", "修改岗位", positionEditParams{}, positionEdit())
+		position.DELETE("delete", "删除岗位", positionDeleteParams{}, positionDelete())
 	}
 }

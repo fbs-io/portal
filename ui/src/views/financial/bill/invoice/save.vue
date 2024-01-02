@@ -3,20 +3,36 @@
 		<el-tabs tab-position="top">
 			<el-tab-pane label="角色基本信息">
 				<el-form :model="form" :rules="rules" :disabled="mode=='show'" ref="dialogForm" label-width="100px" label-position="left">
-					<el-form-item label="公司代码" :disabled="mode=='edit'" prop="company_code">
-						<el-input v-model="form.company_code" clearable placeholder="为空则自动生产代码"></el-input>
+
+					<el-form-item label="发票号码" :disabled="mode=='edit'" prop="invoice_no">
+						<el-input v-model="form.invoice_no" clearable placeholder="发票号码"></el-input>
 					</el-form-item>
-					<el-form-item label="公司名称" prop="company_name">
-						<el-input v-model="form.company_name" clearable></el-input>
+					<el-form-item label="发票代码" prop="invoice_org_code">
+						<el-input v-model="form.invoice_org_code" clearable></el-input>
 					</el-form-item>
-					<el-form-item label="公司简称" prop="company_shortname">
-						<el-input v-model="form.company_shortname" clearable></el-input>
+					<el-form-item label="发票类型" prop="invoice_type">
+						<el-input v-model="form.invoice_type" clearable></el-input>
 					</el-form-item>
-					<el-form-item label="公司描述" prop="company_comment">
-						<el-input v-model="form.company_comment" clearable></el-input>
+					<el-form-item label="开票时间" prop="invoice_date">
+						<el-input v-model="form.invoice_date" clearable></el-input>
 					</el-form-item>
-					<el-form-item label="所属行业" prop="company_business">
-						<el-input v-model="form.company_business" clearable></el-input>
+					<el-form-item label="发票金额" prop="invoice_amount">
+						<el-input v-model="form.invoice_amount" clearable></el-input>
+					</el-form-item>
+					<el-form-item label="发票校验码" prop="invoice_verify_code">
+						<el-input v-model="form.invoice_verify_code" clearable></el-input>
+					</el-form-item>
+					<el-form-item label="加密字符" prop="invoice_encrypt_code">
+						<el-input v-model="form.invoice_encrypt_code" clearable></el-input>
+					</el-form-item>
+					<el-form-item label="购方名称" prop="invoice_purchas_name">
+						<el-input v-model="form.invoice_purchas_name" clearable></el-input>
+					</el-form-item>
+					<el-form-item label="购方税号" prop="invoice_purchas_code">
+						<el-input v-model="form.invoice_purchas_code" clearable></el-input>
+					</el-form-item>
+					<el-form-item label="发票描述" prop="invoice_commnet">
+						<el-input v-model="form.invoice_comment" clearable></el-input>
 					</el-form-item>
 					<el-form-item v-if="mode=='edit'" label="是否有效" prop="status">
 						<el-switch v-model="form.status" :active-value="1" :inactive-value="-1"></el-switch>
@@ -48,11 +64,18 @@
 				//表单数据
 				form: {
 					id: 0,
-					company_code:"",
-					company_name: "",
-					company_shortname: "",
-					company_comment: "",
-					company_business: "",
+					invoice_no:"",
+					invoice_type:"",
+					invoice_date:"",
+					invoice_org_code:"",
+					invoice_verify_code:"",
+					invoice_encrypt_code:"",
+					invoice_comment:"",
+					invoice_purchas_name:"",
+					invoice_purchas_code:"",
+					invoice_num:"",
+					invoice_amount:"",
+					invoice_taxes:"",
 					status:1
 				},
 
@@ -81,9 +104,9 @@
 					if (valid) {
 						this.isSaveing = true;
 						if (this.mode=="add"){
-							var res = await this.$API.basis_org.company.add(this.form);
+							var res = await this.$API.financial.invoice.add(this.form);
 							this.isSaveing = false;
-							if(res.errno == 0){								
+							if(res.errno == 0){
 								if (isNext) {
 									this.form = {
 										company_code:"",
@@ -106,7 +129,7 @@
 								company_comment: this.form.company_comment,
 								company_business: this.form.company_business,
 							}
-							var res = await this.$API.basis_org.company.edit(data);
+							var res = await this.$API.financial.invoice.edit(data);
 							this.isSaveing = false;
 							if (res.errno==0){
 								this.visible = false;

@@ -2,12 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-10-20 06:14:42
+ * @LastEditTime: 2023-11-19 20:58:09
  * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
 
 import (
+	"portal/app/basis/org"
+
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/store/rdb"
 )
@@ -39,7 +41,7 @@ type menuTree struct {
 }
 
 // TODO: 增加角色判断
-func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
+func getMenuTree(ctx core.Context, user *User, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
 	source := &core.Sources{}
 
 	// 构筑条件
@@ -49,12 +51,17 @@ func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, perm
 
 	// TODO: 通过缓存/视图的方式, 减少数据库查询次数
 	// 获取用户
-	user := &User{}
-	err = ctx.NewTX().Where("account = (?)", account).Find(user).Error
-	if err != nil {
-		return
-	}
+	// user := &User{}
+	// err = ctx.NewTX().Where("account = (?)", account).Find(user).Error
+	// if err != nil {
+	// 	return
+	// }
 	permissionList := []string{""}
+	dataPermissionCtx := &rdb.DataPermissionStringCtx{
+		DataPermissionType:  rdb.DATA_PERMISSION_ONESELF,
+		DataPermission:      user.Department,
+		DataPermissionScope: make([]string, 0, 100),
+	}
 	if user.Super != "Y" {
 		// 获取用户关联的角色
 		roles := make([]*Role, 0, 100)
@@ -72,6 +79,22 @@ func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, perm
 		for _, role := range roles {
 			for _, source := range role.Sources {
 				permissionList = append(permissionList, source.(string))
+			}
+			// 处理role上的部门
+			switch role.DataPermissionType {
+			// 自定义部门
+			case rdb.DATA_PERMISSION_ONLY_CUSTOM:
+				for _, cust := range role.DataPermissionCustom {
+					dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, cust.(string))
+				}
+			case rdb.DATA_PERMISSION_ONLY_DEPT:
+				dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, user.Department)
+			case rdb.DATA_PERMISSION_ONLY_DEPT_ALL:
+				depts := make([]*org.Department, 0, 100)
+				err = ctx.NewTX().Where("code in (?) ", userRoles).Find(&depts).Error
+				if err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -147,8 +170,6 @@ func getMenuTree(ctx core.Context, account, mode string) (tree []*menuTree, perm
 			} else {
 				if mTree.IsRouter == core.SOURCE_ROUTER_IS && mTree.Type == core.SOURCE_TYPE_UNMENU {
 					allowTree = append(allowTree, mTree)
-				} else {
-
 				}
 			}
 		}

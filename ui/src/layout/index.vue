@@ -3,17 +3,30 @@
 	<template v-if="layout=='header'">
 		<header class="adminui-header">
 			<div class="adminui-header-left">
-				<div class="logo-bar" style="width: 25em;">
+				<div class="logo-bar" style="width: 30em;">
 					<img class="logo" src="/website/img/logo.png">
-					<span v-if="companies.length<=1">{{ company }}</span>
+					<span v-if="companies.length<=1"  style="font-size: 2rem">{{ company }}</span>
 					<el-dropdown  v-if="companies.length>1" class="" trigger="click" @command="selectCompany">
-							<span class="adminui-header adminui-header-left logo-bar">{{ company }}</span>
+							<span class="adminui-header adminui-header-left logo-bar"
+							      style="font-size: 2rem"
+
+							>{{ company }}</span>
 						<template #dropdown>
 							<el-dropdown-menu>
-								<el-dropdown-item v-for="item in companies" :command="item.company_code">{{ item.company_name }}</el-dropdown-item>
+								<el-dropdown-item v-for="item in companies" :command="item.company_code">{{ (item.company_short_name!="") ? item.company_short_name : item.company_name}}</el-dropdown-item>
 							</el-dropdown-menu>
 						</template>
 					</el-dropdown>
+					<span v-if="positions.length<=1"  style="font-size: 1.3rem">{{ position }}</span>
+					<el-dropdown  v-if="positions.length>1" class="" trigger="click" @command="selectPosition">
+						<span class="adminui-header adminui-header-left logo-bar" style="font-size: 1.3rem;">{{ position }}</span>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<el-dropdown-item v-for="item in positions" :command="item.position_code">{{ item.position_name}}</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
+
 				</div>
 				<ul v-if="!ismobile" class="nav">
 					<li v-for="item in menu" :key="item" :class="pmenu.path==item.path?'active':''" @click="showMenu(item)">
@@ -225,7 +238,9 @@
 				pmenu: {},
 				active: '',
 				companies:[],
-				company:'Default'
+				company:'Default',
+				position:"",
+				positions:[]
 			}
 		},
 		computed:{
@@ -316,21 +331,35 @@
 			async getCompanies(){
 				var user  = this.$TOOL.data.get("USER_INFO")
 				var res = await this.$API.basis_auth.user.getAllowCompany.get({account:user.account})
+				if (res.details.positions && res.details.positions.length>=1){
+					this.positions = res.details.positions
+				}
 				if (res.details.companies && res.details.companies.length>=1){
 					this.companies = res.details.companies
-					this.formatCompany(res.details.company)
+					this.formatCompany(res.details.company,res.details.position)
 				}
 
 				
 			},
-			formatCompany(company_code){
+			formatCompany(company_code,position_code){
 				if (this.companies && this.companies.length>0){
 					this.companies.forEach(item=>{
 						if (item.company_code == company_code){
 							this.company = item.company_name
+							if (item.company_short_name != ""){
+								this.company = item.company_short_name
+							}
 						}
 						if (this.company == ""){
 							this.company = "Default"
+						}
+					})
+				}
+
+				if (this.positions && this.positions.length>0){
+					this.positions.forEach(item=>{
+						if (item.position_code == position_code){
+							this.position = item.position_name
 						}
 					})
 				}
@@ -345,6 +374,13 @@
 					this.$TOOL.data.set("PERMISSIONS",res.details.permissions)
 				}
 				this.$router.go(0)
+			},
+			async selectPosition(position){
+				var user  = this.$TOOL.data.get("USER_INFO")
+				var res = await this.$API.basis_auth.user.setDefaultPosition.post({account:user.account,position:position}) 
+				if (res.errno==0){
+					this.$router.go(0)
+				}
 			},
 		}
 	}

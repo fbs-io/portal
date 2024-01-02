@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-10-28 07:41:57
  * @LastEditors: reel
- * @LastEditTime: 2023-10-28 11:37:48
+ * @LastEditTime: 2023-11-15 06:27:52
  * @Description: 部门设置
  */
 package org
@@ -25,6 +25,6 @@ type Department struct {
 	rdb.ShardingModel
 }
 
-func (o *Department) TableName() string {
+func (model *Department) TableName() string {
 	return consts.TABLE_BASIS_ORG_DEPARTMENT
 }

@@ -1,9 +1,9 @@
 <template>
 	<el-dialog :title="titleMap[mode]" v-model="visible" :width="700" destroy-on-close @closed="$emit('closed')">
 		<el-tabs tab-position="top">
-			<el-tab-pane label="角色基本信息">
+			<el-tab-pane label="部门基本信息">
 				<el-form :model="form" :rules="rules" :disabled="mode=='show'" ref="dialogForm" label-width="100px" label-position="left">
-					<el-form-item label="部门代码" prop="department_code">
+					<el-form-item label="部门代码" :disabled="mode=='edit'" prop="department_code">
 						<el-input v-model="form.department_code" clearable placeholder="为空则自动生产代码"></el-input>
 					</el-form-item>
 					<el-form-item label="部门名称" prop="department_name">
@@ -12,11 +12,8 @@
 					<el-form-item label="部门描述" prop="department_comment">
 						<el-input v-model="form.department_comment" clearable></el-input>
 					</el-form-item>
-					<el-form-item label="父级部门" prop="department_parent_code">
-						<!-- <el-input v-model="form.department_parent_code" clearable></el-input> -->
-						<!-- <div class="treeMain" > -->
+					<el-form-item label="上级部门" prop="department_parent_code">
 						<template #default="scope">
-
 							<el-tree-select 
 								ref="department" 
 								v-model="form.department_parent_code"
@@ -27,7 +24,6 @@
 								:render-after-expand="false"
 							></el-tree-select>
 						</template>
-						<!-- </div> -->
 					</el-form-item>
 					<el-form-item label="自定义层级" prop="department_custom_level">
 						<el-input v-model="form.department_custom_level" clearable></el-input>

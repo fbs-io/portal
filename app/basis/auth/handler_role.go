@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2023-10-20 06:14:25
+ * @LastEditTime: 2023-11-19 20:57:52
  * @Description: 角色相关api逻辑
  */
 package auth
@@ -15,13 +15,23 @@ import (
 	"github.com/fbs-io/core/store/rdb"
 )
 
+// const (
+// 	DATA_PERMISSION_ONESELF       int8 = iota + 1 //本人可见
+// 	DATA_PERMISSION_ALL                           //全部可见
+// 	DATA_PERMISSION_ONLY_DEPT                     //所在部门可见
+// 	DATA_PERMISSION_ONLY_DEPT_ALL                 //所在部门及子级可见
+// 	DATA_PERMISSION_ONLY_CUSTOM                   //选择的部门可见
+// )
+
 // TODO:补充其他用户信息, 如部门等
 // 设计思路: 用户和员工分开, 用户可以绑定员工, 但员工不一定有登陆账户
 type roleAddParams struct {
-	Label       string           `json:"label"`
-	Sort        int              `json:"sort"`
-	Description string           `json:"description"`
-	Sources     rdb.ModeListJson `json:"sources"`
+	Label                string           `json:"label"`
+	Sort                 int              `json:"sort"`
+	Description          string           `json:"description"`
+	Sources              rdb.ModeListJson `json:"sources"`
+	DataPermissionType   int8             `json:"data_permission_type"`
+	DataPermissionCustom rdb.ModeListJson `json:"data_permission_custom"`
 }
 
 func roleAdd(roleSeq sequence.Sequence) core.HandlerFunc {
@@ -29,11 +39,15 @@ func roleAdd(roleSeq sequence.Sequence) core.HandlerFunc {
 		param := ctx.CtxGetParams().(*roleAddParams)
 		tx := ctx.TX()
 		role := &Role{
-			Code:        roleSeq.Code(),
-			Label:       param.Label,
-			Sort:        param.Sort,
-			Description: param.Description,
-			Sources:     param.Sources,
+			Code:               roleSeq.Code(),
+			Label:              param.Label,
+			Sort:               param.Sort,
+			Description:        param.Description,
+			Sources:            param.Sources,
+			DataPermissionType: param.DataPermissionType,
+		}
+		if role.DataPermissionType == rdb.DATA_PERMISSION_ONLY_CUSTOM {
+			role.DataPermissionCustom = param.DataPermissionCustom
 		}
 		err := tx.Create(role).Error
 		if err != nil {
@@ -88,12 +102,14 @@ func rolesQuery() core.HandlerFunc {
 //
 // id作为数组, 不适用于自动查询条件生成
 type rolesUpdateParams struct {
-	ID          []uint           `json:"id"  binding:"required" conditions:"-"`
-	Label       string           `json:"label" conditions:"-"`
-	Sort        int              `json:"json" conditions:"-"`
-	Description string           `json:"description" conditions:"-"`
-	Sources     rdb.ModeListJson `json:"sources" conditions:"-"`
-	Status      int8             `json:"status" conditions:"-"`
+	ID                   []uint           `json:"id"  binding:"required" conditions:"-"`
+	Label                string           `json:"label" conditions:"-"`
+	Sort                 int              `json:"json" conditions:"-"`
+	Description          string           `json:"description" conditions:"-"`
+	Sources              rdb.ModeListJson `json:"sources" conditions:"-"`
+	Status               int8             `json:"status" conditions:"-"`
+	DataPermissionType   int8             `json:"data_permission_type" conditions:"-"`
+	DataPermissionCustom rdb.ModeListJson `json:"data_permission_custom" conditions:"-"`
 }
 
 func rolesUpdate() core.HandlerFunc {
@@ -101,10 +117,14 @@ func rolesUpdate() core.HandlerFunc {
 		param := ctx.CtxGetParams().(*rolesUpdateParams)
 		tx := ctx.TX()
 		role := &Role{
-			Label:       param.Label,
-			Sort:        param.Sort,
-			Description: param.Description,
-			Sources:     param.Sources,
+			Label:              param.Label,
+			Sort:               param.Sort,
+			Description:        param.Description,
+			Sources:            param.Sources,
+			DataPermissionType: param.DataPermissionType,
+		}
+		if param.DataPermissionType == rdb.DATA_PERMISSION_ONLY_CUSTOM {
+			role.DataPermissionCustom = param.DataPermissionCustom
 		}
 		role.Status = param.Status
 		err := tx.Model(role).Where("id in (?)", param.ID).Updates(role).Error
@@ -140,7 +160,8 @@ func rolesDelete() core.HandlerFunc {
 // 菜单和权限查询, 返回树表结构
 func menusQueryWithPermission() core.HandlerFunc {
 	return func(ctx core.Context) {
-		menus, _, err := getMenuTree(ctx, ctx.Auth(), QUERY_MENU_MODE_PERMISSION)
+		user := GetUser(ctx.Auth(), ctx, REFRESH_NOT)
+		menus, _, err := getMenuTree(ctx, user, QUERY_MENU_MODE_MANAGE)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return

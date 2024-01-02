@@ -37,20 +37,28 @@
 					 <el-option v-for="item in supers" :key="item.value" :label="item.label" :value="item.value"/>
 				</el-select>
 			</el-form-item>
-			<!-- <el-form-item label="所属部门" prop="dept">
-				<el-cascader v-model="form.dept" :options="depts" :props="deptsProps" clearable style="width: 100%;"></el-cascader>
-			</el-form-item> -->
-			<el-form-item label="所属部门" prop="department">
+			<el-form-item label="主要岗位" prop="position1">
 				<template #default="scope">
-					<el-tree-select 
-						ref="department" 
-						v-model="form.department"
-						node-key="department_code"
-						:data="department.list" 
-						:props="department.props" 
-						check-strictly
-						:render-after-expand="false"
-					></el-tree-select>
+					<el-select 
+						ref="position" 
+						filterable
+						v-model="form.position1"
+					>
+						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="form.position2.indexOf(item.code)>-1"/>
+					</el-select>
+				</template>
+			</el-form-item>
+
+			<el-form-item label="兼职岗位" prop="position2">
+				<template #default="scope">
+					<el-select 
+						ref="position2" 
+						filterable
+						multiple
+						v-model="form.position2"
+					>
+						<el-option v-for="item in position.list" :label="item.name" :value="item.code" :disabled="item.code==form.position1"/>
+					</el-select>
 				</template>
 			</el-form-item>
 			<el-form-item label="所属公司" prop="company">
@@ -95,7 +103,8 @@
 					dept: "",
 					role: [],
 					company: [],
-					department: "",
+					position1: "",
+					position2: [],
 					super:"N",
 					password:"",
 					password2:"",
@@ -131,8 +140,8 @@
 							}
 						}}
 					],
-					dept: [
-						{required: true, message: '请选择所属部门'}
+					position: [
+						{required: true, message: '请选择所属岗位'}
 					],
 					group: [
 						{required: true, message: '请选择所属角色', trigger: 'change'}
@@ -151,12 +160,12 @@
 					multiple: true,
 					checkStrictly: true
 				},
-				department: {
+				position: {
 					list: [],
 					checked: [],
 					props: {
 						label: (data)=>{
-							return data.department_name
+							return data.position_name
 						},
 					}
 				},
@@ -183,19 +192,28 @@
 			}
 		},
 		mounted() {
-			
-
-			// this.getDept()
 		},
+		// watch: {
+		// 	form:{
+		// 		handler(val,oval){
+		// 			console.log(val,oval)
+		// 		},
+		// 		deep:true
+		// 	}
+		// },
 		methods: {
 			//显示
 			open(mode='add'){
 				this.mode = mode;
 				this.visible = true;
 				
-				if (this.mode!="show"){
+				// if (this.mode!="show"){
 					this.getRoles()
 					this.getCompanies()
+					this.getPositions()
+				// }
+				if (mode=='add'){
+					this.getAllowCompany()
 				}
 				return this
 			},
@@ -208,9 +226,14 @@
 				var res = await this.$API.basis_org.company.list({page_num:-1,page_size:-1});
 				this.companies = res.details.rows;
 			},
-			async getDept(){
-				// var res = await this.$API.system.dept.list.get();
-				// this.depts = res.data;
+			async getPositions(){
+				var res = await this.$API.common.dimension.get({dim_type:"position"});
+				this.position.list = res.details
+			},
+			async getAllowCompany(){
+				var user  = this.$TOOL.data.get("USER_INFO")
+				var res = await this.$API.basis_auth.user.getAllowCompany.get({account:user.account})
+				this.form.company.push(res.details.company)
 			},
 			//表单提交方法
 			submit(isNext){
@@ -236,6 +259,9 @@
 										department:"",
 										super:"N",
 										email:"",
+										position1:"",
+										position:"",
+										position2:"",
 									}
 								}else{
 									this.visible = false;
@@ -252,7 +278,8 @@
 								role: this.form.role,
 								super: this.form.super,
 								email: this.form.email,
-								department:this.form.department,
+								position1:this.form.position1,
+								position2:this.form.position2,
 							}
 							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;
@@ -271,10 +298,7 @@
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
 				Object.assign(this.form, data)
 			},
-			async getDepartmentTree(){
-				let res = await this.$API.basis_org.department.tree()
-				this.department.list = res.details.rows
-			}
+
 		}
 	}
 </script>

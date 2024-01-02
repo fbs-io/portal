@@ -2,12 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-10-19 07:37:25
+ * @LastEditTime: 2023-12-30 22:56:41
  * @Description: 请填写简介
  */
 package auth
 
 import (
+	"fmt"
+	"portal/app/basis/org"
 	"portal/pkg/consts"
 
 	"github.com/fbs-io/core"
@@ -87,13 +89,15 @@ func getCompany() core.HandlerFunc {
 		companies := make([]string, 0, 10)
 
 		for _, c := range user.Company {
-			companies = append(companies, c.(string))
+			if c != nil {
+				companies = append(companies, c.(string))
+			}
 		}
 		tx = tx.Table(consts.TABLE_BASIS_ORG_COMPANY).Where("status = 1")
 		if user.Super != "Y" {
 			tx = tx.Where(`company_code in ?`, companies)
 		}
-		tx.Select("company_code", "company_name").Find(&result)
+		tx.Select("company_code", "company_name", "company_short_name").Find(&result)
 		company_code := ctx.Core().Cache().Get(consts.GenUserCompanyKey(user.Account))
 		var isCheck = false
 		if len(result) > 0 {
@@ -113,6 +117,48 @@ func getCompany() core.HandlerFunc {
 		}
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(user.Account), company_code)
 		SetUser(user.Account, user)
+
+		// 岗位读取设置
+		rlat := make([]*RlatUserPosition, 0, 10)
+		ctx.NewTX().Where("account = ? ", user.Account).Find(&rlat)
+		position_codes := make([]string, 0, 100)
+		position_map := make(map[string]*RlatUserPosition, 10)
+		for _, r := range rlat {
+			position_codes = append(position_codes, r.PositionCode)
+			position_map[r.PositionCode] = r
+			if r.IsPosition == 1 {
+				res["position"] = r.PositionCode
+			}
+		}
+		position_code := ctx.Core().Cache().Get(consts.GenUserPositionKey(user.Account, company_code))
+		if position_code != "" {
+			res["position"] = position_code
+		}
+
+		positions := make([]*org.Position, 0, 100)
+
+		ctx.NewTX().Where("position_code in ? ", position_codes).Find(&positions)
+
+		department_codes := make([]string, 0, 10)
+		deparment_map := make(map[string]*org.Position, 10)
+		for _, position := range positions {
+			department_codes = append(department_codes, position.DepartmentCode)
+			deparment_map[position.DepartmentCode] = position
+		}
+
+		departments := make([]*org.Department, 0, 10)
+		positionList := make([]map[string]string, 0, 10)
+		ctx.NewTX().Where("department_code in ? ", department_codes).Find(&departments)
+		for _, department := range departments {
+			positionList = append(positionList, map[string]string{
+				"position_code": deparment_map[department.DepartmentCode].PositionCode,
+				"position_name": fmt.Sprintf("%s - %s", department.DepartmentName, deparment_map[department.DepartmentCode].PositionName),
+			})
+		}
+		res["positions"] = positionList
+		if res["position"] != nil {
+			ctx.Core().Cache().Set(consts.GenUserPositionKey(user.Account, company_code), res["position"].(string))
+		}
 		ctx.JSON(errno.ERRNO_OK.WrapData(res))
 	}
 }
@@ -133,5 +179,21 @@ func setDefaultCompany() core.HandlerFunc {
 			"permissions": user.Permissions,
 		}
 		ctx.JSON(errno.ERRNO_OK.WrapData(result))
+	}
+}
+
+type setDefaultPositionParams struct {
+	Account  string `json:"account"`
+	Position string `json:"position"`
+}
+
+func setDefaultPosition() core.HandlerFunc {
+	return func(ctx core.Context) {
+		param := ctx.CtxGetParams().(*setDefaultPositionParams)
+		company_code := ctx.Core().Cache().Get(consts.GenUserCompanyKey(param.Account))
+
+		ctx.Core().Cache().Set(consts.GenUserPositionKey(param.Account, company_code), param.Position)
+		ctx.CtxSet(core.CTX_DATA_PERMISSION_KEY, param.Position)
+		ctx.JSON(errno.ERRNO_OK)
 	}
 }
