@@ -5,9 +5,10 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	github.com/fbs-io/core v0.0.0-20231029074442-7bc4fe1aa5ee
+	github.com/fbs-io/core v0.0.0-20240101131139-e80d44a95b07
 	github.com/gin-gonic/gin v1.9.0
 	github.com/google/uuid v1.3.0
+	github.com/shopspring/decimal v1.3.1
 	golang.org/x/crypto v0.8.0
 	gorm.io/gorm v1.25.4
 )
@@ -41,7 +42,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/shirou/gopsutil v2.21.11+incompatible // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.2 // indirect
 	github.com/tidwall/btree v1.4.2 // indirect
 	github.com/tidwall/buntdb v1.3.0 // indirect
@@ -68,4 +68,4 @@ require (
 	gorm.io/driver/sqlite v1.5.0 // indirect
 )
 
-replace github.com/fbs-io/core => ../core
+// replace github.com/fbs-io/core => ../core

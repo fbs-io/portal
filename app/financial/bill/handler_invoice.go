@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-31 16:41:30
  * @LastEditors: reel
- * @LastEditTime: 2023-12-31 21:35:53
+ * @LastEditTime: 2024-01-02 22:51:18
  * @Description: 发票管理
  */
 
@@ -73,7 +73,7 @@ func invoiceHeaderAddWithQr() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*invoiceHeaderAddWithQrParam)
 		infors := strings.Split(param.Info, ",")
-		if len(infors) != 8 {
+		if len(infors) != 9 {
 			ctx.JSON(errno.ERRNO_PARAMS_INVALID.WrapError(errorx.New("发票二维码不正确")))
 			return
 		}
@@ -86,7 +86,9 @@ func invoiceHeaderAddWithQr() core.HandlerFunc {
 			InvoiceEncryptCode: infors[7],
 		}
 		invoice.InvoiceAmount, _ = decimal.NewFromString(infors[4])
-
+		invoice.CreatedBy = param.Auth
+		invoice.ShadingKey = param.SK
+		invoice.DataPermission = param.DP
 		err := ctx.TX().Create(invoice).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
