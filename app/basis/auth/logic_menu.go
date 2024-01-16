@@ -2,14 +2,12 @@
  * @Author: reel
  * @Date: 2023-07-30 22:09:24
  * @LastEditors: reel
- * @LastEditTime: 2023-11-19 20:58:09
+ * @LastEditTime: 2024-01-14 20:40:53
  * @Description: 临时生成菜单用, 菜单功能主要思路: 由后端完成菜单的生成, 前端主要用于查看
  */
 package auth
 
 import (
-	"portal/app/basis/org"
-
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/store/rdb"
 )
@@ -37,10 +35,8 @@ type menuTree struct {
 	Component  string          `json:"component"`
 	Meta       rdb.ModeMapJson `json:"meta"` // 前端组件原信息
 	Children   []*menuTree     `json:"children"`
-	// *core.SourcesBase
 }
 
-// TODO: 增加角色判断
 func getMenuTree(ctx core.Context, user *User, mode string) (tree []*menuTree, permissions map[string]bool, err error) {
 	source := &core.Sources{}
 
@@ -49,19 +45,12 @@ func getMenuTree(ctx core.Context, user *User, mode string) (tree []*menuTree, p
 	cond.Orders = "level, id"
 	cond.TableName = source.TableName()
 
-	// TODO: 通过缓存/视图的方式, 减少数据库查询次数
-	// 获取用户
-	// user := &User{}
-	// err = ctx.NewTX().Where("account = (?)", account).Find(user).Error
-	// if err != nil {
-	// 	return
-	// }
 	permissionList := []string{""}
-	dataPermissionCtx := &rdb.DataPermissionStringCtx{
-		DataPermissionType:  rdb.DATA_PERMISSION_ONESELF,
-		DataPermission:      user.Department,
-		DataPermissionScope: make([]string, 0, 100),
-	}
+	// dataPermissionCtx := &rdb.DataPermissionStringCtx{
+	// 	DataPermissionType:  rdb.DATA_PERMISSION_ONESELF,
+	// 	DataPermission:      user.Department,
+	// 	DataPermissionScope: make([]string, 0, 100),
+	// }
 	if user.Super != "Y" {
 		// 获取用户关联的角色
 		roles := make([]*Role, 0, 100)
@@ -80,23 +69,22 @@ func getMenuTree(ctx core.Context, user *User, mode string) (tree []*menuTree, p
 			for _, source := range role.Sources {
 				permissionList = append(permissionList, source.(string))
 			}
-			// 处理role上的部门
-			switch role.DataPermissionType {
-			// 自定义部门
-			case rdb.DATA_PERMISSION_ONLY_CUSTOM:
-				for _, cust := range role.DataPermissionCustom {
-					dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, cust.(string))
-				}
-			case rdb.DATA_PERMISSION_ONLY_DEPT:
-				dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, user.Department)
-			case rdb.DATA_PERMISSION_ONLY_DEPT_ALL:
-				depts := make([]*org.Department, 0, 100)
-				err = ctx.NewTX().Where("code in (?) ", userRoles).Find(&depts).Error
-				if err != nil {
-					return
-				}
-			}
+			// // 处理role上的部门
+			// switch role.DataPermissionType {
+			// case rdb.DATA_PERMISSION_ONLY_CUSTOM:
+			// 	for _, cust := range role.DataPermissionCustom {
+			// 		dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, cust.(string))
+			// 	}
+			// case rdb.DATA_PERMISSION_ONLY_DEPT:
+			// 	dataPermissionCtx.DataPermissionScope = append(dataPermissionCtx.DataPermissionScope, user.Department)
+			// case rdb.DATA_PERMISSION_ONLY_DEPT_ALL:
+			// 	depts := make([]*org.Department, 0, 100)
+			// 	err = ctx.NewTX().Where("code in (?) ", userRoles).Find(&depts).Error
+			// 	if err != nil {
+			// 		return
+			// 	}
 		}
+		// }
 	}
 	switch mode {
 

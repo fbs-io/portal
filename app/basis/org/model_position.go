@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-20 23:37:54
  * @LastEditors: reel
- * @LastEditTime: 2023-12-25 20:19:43
+ * @LastEditTime: 2024-01-16 22:44:43
  * @Description: 岗位管理, 岗位关联部门, 同时可以设置相关数据权限, 审批权限等
  */
 package org
@@ -45,4 +45,43 @@ func (model *Position) BeforeCreate(tx *gorm.DB) error {
 		model.IsVritual = -1
 	}
 	return nil
+}
+
+// 岗位新增参数
+type positionAddParams struct {
+	PositionCode         string           `json:"position_code"`
+	PositionName         string           `json:"position_name" binding:"required"`
+	PositionComment      string           `json:"position_comment"`
+	PositionParentCode   string           `json:"position_parent_code"`
+	DepartmentCode       string           `json:"department_code" binding:"required"`
+	JobCode              string           `json:"job_code"`
+	IsHead               int8             `json:"is_head"`
+	IsApprove            int8             `json:"is_approve"`
+	IsVritual            int8             `json:"is_vritual"`
+	DataPermissionType   int8             `json:"data_permission_type"`
+	DataPermissionCustom rdb.ModeListJson `json:"data_permission_custom"`
+}
+
+// 岗位修改参数
+type positionEditParams struct {
+	ID                   []uint           `json:"id" binding:"required" conditions:"-"`
+	PositionName         string           `json:"position_name" conditions:"-"`
+	PositionComment      string           `json:"position_comment" conditions:"-"`
+	PositionParentCode   string           `json:"position_parent_code" conditions:"-"`
+	DepartmentCode       string           `json:"department_code" conditions:"-"`
+	JobCode              string           `json:"job_code" conditions:"-"`
+	IsHead               int8             `json:"is_head" conditions:"-"`
+	IsApprove            int8             `json:"is_approve" conditions:"-"`
+	IsVritual            int8             `json:"is_vritual" conditions:"-"`
+	Status               int8             `json:"status" conditions:"-"`
+	DataPermissionType   int8             `json:"data_permission_type" conditions:"-"`
+	DataPermissionCustom rdb.ModeListJson `json:"data_permission_custom" conditions:"-"`
+}
+
+// 岗位查询参数
+type positionQueryParams struct {
+	PageNum      int    `form:"page_num"`
+	PageSize     int    `form:"page_size"`
+	Orders       string `form:"orders"`
+	PositionName string `form:"position_name" conditions:"like"`
 }

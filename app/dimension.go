@@ -2,12 +2,13 @@
  * @Author: reel
  * @Date: 2023-10-05 19:59:11
  * @LastEditors: reel
- * @LastEditTime: 2023-12-25 23:04:19
+ * @LastEditTime: 2024-01-16 23:48:34
  * @Description: 维度信息管理, 用于管理整个app的维度信息, 由多个表组合而成
  */
 package app
 
 import (
+	"portal/app/basis/org"
 	"portal/pkg/consts"
 
 	"github.com/fbs-io/core"
@@ -56,23 +57,20 @@ func dimList() core.HandlerFunc {
 // 获取维度表
 //
 // 用于前端的数据展示等
-func queryDimList(tx *gorm.DB, dimType string) (result []*dimResult, err error) {
+func queryDimList(tx *gorm.DB, dimType string) (result interface{}, err error) {
 
 	result = make([]*dimResult, 0, 1000)
 
 	switch dimType {
 	case DIM_TYPE_COMPANY:
-		tx = tx.Table(consts.TABLE_BASIS_ORG_COMPANY).Select("company_code as code", "company_name as name", "status")
-		err = tx.Where("status > 0 ").Find(&result).Error
+		result = org.CompanySrvice.DimList()
 	case DIM_TYPE_DEPARTMENT:
-		tx = tx.Table(consts.TABLE_BASIS_ORG_DEPARTMENT).Select("department_code as code", "department_name as name", "department_parent_code as pcode", "status")
-		err = tx.Where("status > 0 ").Find(&result).Error
+		result = org.DepartmentSrvice.DimList(tx)
 	case DIM_TYPE_ROLE:
 		tx = tx.Table(consts.TABLE_BASIS_AUTH_ROLE).Select("code", "label as name", "status")
 		err = tx.Where("status > 0 ").Find(&result).Error
 	case DIM_TYPE_POSITION:
-		tx = tx.Table(consts.TABLE_BASIS_ORG_POSITION).Select("position_code as code", "position_name as name", "position_parent_code as pcode", "status")
-		err = tx.Where("status > 0 ").Find(&result).Error
+		result = org.PositionSrvice.DimList(tx)
 	default:
 		err = errorx.New("dim_type不合法, 请输入正确的值")
 	}

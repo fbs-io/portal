@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-19 04:34:39
  * @LastEditors: reel
- * @LastEditTime: 2023-10-15 23:12:22
+ * @LastEditTime: 2024-01-15 22:39:26
  * @Description: 公司管理, 系统按公司别进行数据隔离
  */
 package org
@@ -13,15 +13,8 @@ import (
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/pkg/errorx"
+	"github.com/fbs-io/core/store/rdb"
 )
-
-type companyAddParams struct {
-	CompanyCode      string `json:"company_code"`
-	CompanyName      string `json:"company_name"`
-	CompanyShortName string `json:"company_shortname"`
-	CompanyComment   string `json:"company_comment"`
-	CompanyBusiness  string `json:"company_business"`
-}
 
 func companyAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 	return func(ctx core.Context) {
@@ -34,59 +27,26 @@ func companyAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 			return
 		}
 
-		company := &Company{
-			CompanyCode:      param.CompanyCode,
-			CompanyName:      param.CompanyName,
-			CompanyShortName: param.CompanyShortName,
-			CompanyComment:   param.CompanyComment,
-			CompanyBusiness:  param.CompanyBusiness,
-		}
-		err := ctx.TX().Create(company).Error
+		err := CompanySrvice.Create(ctx.TX(), param)
 		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
+			ctx.JSON(errno.ERRNO_RDB.WrapError(err))
 			return
 		}
-		// 创建公司相关的库或者表
-		ctx.Core().RDB().AddShardingSuffixs(company.CompanyCode)
 		ctx.JSON(errno.ERRNO_OK.Notify())
 	}
-}
-
-type companyEditParams struct {
-	ID               []uint `json:"id" binding:"required"`
-	CompanyName      string `json:"company_name"  conditions:"-"`
-	CompanyShortName string `json:"company_shortname"  conditions:"-"`
-	CompanyComment   string `json:"company_comment"  conditions:"-"`
-	CompanyBusiness  string `json:"company_business"  conditions:"-"`
-	Status           int8   `json:"status" conditions:"-"`
 }
 
 func companyEdit() core.HandlerFunc {
 	return func(ctx core.Context) {
-
 		param := ctx.CtxGetParams().(*companyEditParams)
-		company := &Company{
-			CompanyName:      param.CompanyName,
-			CompanyShortName: param.CompanyShortName,
-			CompanyComment:   param.CompanyComment,
-			CompanyBusiness:  param.CompanyBusiness,
-		}
-		company.Status = param.Status
 
-		err := ctx.TX().Where("id in (?) ", param.ID).Updates(company).Error
+		err := CompanySrvice.UpdateByID(ctx.TX(), param)
 		if err != nil {
-			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
+			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
 			return
 		}
 		ctx.JSON(errno.ERRNO_OK.Notify())
 	}
-}
-
-type companyQueryParams struct {
-	PageNum     int    `form:"page_num"`
-	PageSize    int    `form:"page_size"`
-	Orders      string `form:"orders"`
-	CompanyName string `form:"company_name" conditions:"like"`
 }
 
 func companyList() core.HandlerFunc {
@@ -118,23 +78,17 @@ func companyList() core.HandlerFunc {
 	}
 }
 
-type companyDeleteParams struct {
-	ID []uint `json:"id" binding:"required" conditions:"-"`
-}
-
 // 软删除
 func companyDelete() core.HandlerFunc {
 	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*companyDeleteParams)
-		tx := ctx.TX()
+		param := ctx.CtxGetParams().(*rdb.DeleteParams)
 
-		company := &Company{}
-
-		err := tx.Model(company).Where("id in (?)", param.ID).Delete(company).Error
+		err := CompanySrvice.Delete(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return
 		}
+
 		ctx.JSON(errno.ERRNO_OK.Notify())
 	}
 }

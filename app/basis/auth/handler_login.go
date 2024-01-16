@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2023-12-30 22:56:41
+ * @LastEditTime: 2024-01-15 00:46:08
  * @Description: 请填写简介
  */
 package auth
@@ -85,7 +85,7 @@ func getCompany() core.HandlerFunc {
 		}
 
 		var result = make([]map[string]interface{}, 0, 10)
-		tx := ctx.NewTX()
+		// tx := ctx.NewTX()
 		companies := make([]string, 0, 10)
 
 		for _, c := range user.Company {
@@ -93,11 +93,19 @@ func getCompany() core.HandlerFunc {
 				companies = append(companies, c.(string))
 			}
 		}
-		tx = tx.Table(consts.TABLE_BASIS_ORG_COMPANY).Where("status = 1")
-		if user.Super != "Y" {
-			tx = tx.Where(`company_code in ?`, companies)
+		if user.Super == "Y" {
+			companies = nil
+
 		}
-		tx.Select("company_code", "company_name", "company_short_name").Find(&result)
+		companyList := org.CompanySrvice.GetByCode(companies)
+		for _, company := range companyList {
+			result = append(result, map[string]interface{}{
+				"company_code":       company.CompanyCode,
+				"company_name":       company.CompanyName,
+				"company_short_name": company.CompanyShortName,
+			})
+		}
+		// 设置/更新默认公司
 		company_code := ctx.Core().Cache().Get(consts.GenUserCompanyKey(user.Account))
 		var isCheck = false
 		if len(result) > 0 {

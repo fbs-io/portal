@@ -1,7 +1,7 @@
 <template>
 	<el-dialog :title="titleMap[mode]" v-model="visible" :width="700" destroy-on-close @closed="$emit('closed')">
 		<el-tabs tab-position="top">
-			<el-tab-pane label="角色基本信息">
+			<el-tab-pane label="公司基本信息">
 				<el-form :model="form" :rules="rules" :disabled="mode=='show'" ref="dialogForm" label-width="100px" label-position="left">
 					<el-form-item label="公司代码" :disabled="mode=='edit'" prop="company_code">
 						<el-input v-model="form.company_code" clearable placeholder="为空则自动生产代码"></el-input>

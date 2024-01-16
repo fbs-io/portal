@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-06-24 12:45:15
  * @LastEditors: reel
- * @LastEditTime: 2023-12-31 20:57:03
+ * @LastEditTime: 2024-01-15 00:01:55
  * @Description: 业务代码，加载各个模块
  */
 package app
@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"portal/app/basis"
 	"portal/app/financial"
+	"portal/pkg/consts"
 	"portal/ui/dist"
 
 	"github.com/fbs-io/core"
@@ -22,12 +23,15 @@ import (
 func New(c core.Core) {
 	// 使用数据分区模式
 	c.RDB().AddMigrateList(func() error {
-		res, _ := queryDimList(c.RDB().DB(), DIM_TYPE_COMPANY)
-		suffixList := make([]interface{}, 0, len(res))
-		for _, item := range res {
+		result := make([]*dimResult, 0, 10)
+		tx := c.RDB().DB()
+		tx = tx.Table(consts.TABLE_BASIS_ORG_COMPANY).Select("company_code as code", "company_name as name", "status")
+		tx.Where("status > 0 ").Find(&result)
+		suffixList := make([]interface{}, 0, len(result))
+		for _, item := range result {
 			suffixList = append(suffixList, item.Code)
 		}
-		c.RDB().SetShardingModel(rdb.SHADING_MODEL_TABLE, suffixList)
+		c.RDB().SetShardingModel(rdb.SHADING_MODEL_DB, suffixList)
 		return nil
 	})
 	// 中间件使用

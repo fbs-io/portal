@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-18 20:14:52
  * @LastEditors: reel
- * @LastEditTime: 2023-12-31 16:40:53
+ * @LastEditTime: 2024-01-15 22:40:49
  * @Description: 法人管理
  */
 package org
@@ -26,12 +26,29 @@ func (o *Company) TableName() string {
 	return consts.TABLE_BASIS_ORG_COMPANY
 }
 
-// func (o *Company) BeforeCreate(tx *gorm.DB) error {
-// 	o.Model.BeforeCreate(tx)
-// 	return nil
-// }
+// 新增法人参数
+type companyAddParams struct {
+	CompanyCode      string `json:"company_code"`
+	CompanyName      string `json:"company_name"`
+	CompanyShortName string `json:"company_shortname"`
+	CompanyComment   string `json:"company_comment"`
+	CompanyBusiness  string `json:"company_business"`
+}
 
-// func (o *Company) BeforeUpdate(tx *gorm.DB) error {
-// 	o.Model.BeforeUpdate(tx)
-// 	return nil
-// }
+// 更新公司参数
+type companyEditParams struct {
+	ID               []uint `json:"id" binding:"required"`
+	CompanyName      string `json:"company_name"  conditions:"-"`
+	CompanyShortName string `json:"company_shortname"  conditions:"-"`
+	CompanyComment   string `json:"company_comment"  conditions:"-"`
+	CompanyBusiness  string `json:"company_business"  conditions:"-"`
+	Status           int8   `json:"status" conditions:"-"`
+}
+
+// 查询公司参数
+type companyQueryParams struct {
+	PageNum     int    `form:"page_num"`
+	PageSize    int    `form:"page_size"`
+	Orders      string `form:"orders"`
+	CompanyName string `form:"company_name" conditions:"like"`
+}

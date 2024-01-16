@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-10-28 10:29:01
  * @LastEditors: reel
- * @LastEditTime: 2023-12-31 20:47:42
+ * @LastEditTime: 2024-01-15 22:01:44
  * @Description: 部门模块相关处理逻辑
  */
 package org
@@ -29,23 +29,23 @@ var (
 	lock = &sync.RWMutex{}
 )
 
-type departmentTree struct {
-	ID                    uint              `json:"id"`
-	DepartmentCode        string            `json:"department_code"`
-	DepartmentName        string            `json:"department_name"`
-	DepartmentComment     string            `json:"department_comment"`
-	DepartmentLevel       int8              `json:"department_level"`
-	DepartmentFullPath    string            `json:"department_full_path"`
-	DepartmentFullPath2   string            `json:"-"` // 用于记录组织code全路径
-	DepartmentParentCode  string            `json:"department_parent_code"`
-	DepartmentCustomLevel string            `json:"department_custom_level"`
-	CreatedAT             uint              `json:"created_at"`
-	CreatedBy             string            `json:"created_by"`
-	UpdatedAT             uint              `json:"updated_at"`
-	UpdatedBy             string            `json:"updated_by"`
-	Status                int8              `json:"status"`
-	Children              []*departmentTree `json:"children"`
-}
+// type departmentTree struct {
+// 	ID                    uint              `json:"id"`
+// 	DepartmentCode        string            `json:"department_code"`
+// 	DepartmentName        string            `json:"department_name"`
+// 	DepartmentComment     string            `json:"department_comment"`
+// 	DepartmentLevel       int8              `json:"department_level"`
+// 	DepartmentFullPath    string            `json:"department_full_path"`
+// 	DepartmentFullPath2   string            `json:"-"` // 用于记录组织code全路径
+// 	DepartmentParentCode  string            `json:"department_parent_code"`
+// 	DepartmentCustomLevel string            `json:"department_custom_level"`
+// 	CreatedAT             uint              `json:"created_at"`
+// 	CreatedBy             string            `json:"created_by"`
+// 	UpdatedAT             uint              `json:"updated_at"`
+// 	UpdatedBy             string            `json:"updated_by"`
+// 	Status                int8              `json:"status"`
+// 	Children              []*departmentTree `json:"children"`
+// }
 
 // TODO: 做成通用方法
 // 通过list生成树结构
