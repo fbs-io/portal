@@ -32,7 +32,6 @@ var isGetRouter = false
 
 router.beforeEach(async (to, from, next) => {
 	NProgress.start()
-
 	//动态标题
 	document.title = to.meta.title ? `${to.meta.title} - ${config.APP_NAME}` : `${config.APP_NAME}`
 	let token = tool.cookie.get("TOKEN");
@@ -71,7 +70,6 @@ router.beforeEach(async (to, from, next) => {
 		menuRouter.forEach(item => {
 			router.addRoute("layout", item)
 		})
-
 		if (to.matched.length == 0) {
 			router.push(to.path);
 		}
@@ -92,7 +90,6 @@ router.beforeEach(async (to, from, next) => {
 	if (to.matched.length == 0) {
 		router.push(to.path);
 	}
-
 	next();
 
 });
@@ -118,6 +115,7 @@ router.sc_getMenu = () => {
 	let userMenu = treeFilter(userRoutes, node => {
 		return node.meta.role ? node.meta.role.filter(item=>userInfo.role.indexOf(item)>-1).length > 0 : true
 	})
+	
 	var menu = [...userMenu, ...apiMenu]
 	return menu
 }
@@ -135,7 +133,7 @@ function filterAsyncRouter(routerMap) {
 		//MAP转路由对象
 		var route = {
 			path: item.path,
-			name: item.name,
+			name: item.code,
 			meta: item.meta,
 			hidden:item.hidden,
 			redirect: item.redirect,

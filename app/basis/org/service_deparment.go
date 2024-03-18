@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2024-01-15 20:03:41
  * @LastEditors: reel
- * @LastEditTime: 2024-01-17 00:10:58
+ * @LastEditTime: 2024-03-13 07:03:23
  * @Description: 部门表相关逻辑处理
  */
 package org
@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type departmentSrvice struct {
+type departmentService struct {
 	lock        *sync.RWMutex
 	core        core.Core
 	list        map[string][]*Department
@@ -29,13 +29,13 @@ type departmentSrvice struct {
 	dimList     map[string][]map[string]interface{}              // 维度表
 }
 
-var DepartmentSrvice *departmentSrvice
+var DepartmentService *departmentService
 
 // 初始化
 //
 // 根据不同分区缓存
-func DepartmentSrviceInit(c core.Core) {
-	DepartmentSrvice = &departmentSrvice{
+func DepartmentServiceInit(c core.Core) {
+	DepartmentService = &departmentService{
 		core:        c,
 		lock:        &sync.RWMutex{},
 		list:        make(map[string][]*Department, 100),
@@ -45,24 +45,24 @@ func DepartmentSrviceInit(c core.Core) {
 		allChildren: make(map[string]map[string]map[string]*departmentTree, 100),
 		dimList:     make(map[string][]map[string]interface{}, 100),
 	}
-	for sk := range CompanySrvice.codeMap {
+	for sk := range CompanyService.codeMap {
 		var deparments = make([]*Department, 0, 100)
 		tx := c.RDB().DB().Where("1=1")
 		tx.Set(core.CTX_SHARDING_KEY, sk)
-		tx.Where("deleted_at = 0").Order("id").Find(&deparments)
+		tx.Order("id").Find(&deparments)
 
 		for _, item := range deparments {
-			DepartmentSrvice.setCache(tx, item)
+			DepartmentService.setCache(tx, item)
 		}
-		DepartmentSrvice.list[sk] = deparments
-		DepartmentSrvice.GenDepartmentTree(tx)
-
+		DepartmentService.list[sk] = deparments
+		DepartmentService.GenDepartmentTree(tx)
+		DepartmentService.genDimList(tx)
 	}
 
 }
 
 // 创建缓存, 增加分区
-func (srv *departmentSrvice) setCache(tx *gorm.DB, item *Department) {
+func (srv *departmentService) setCache(tx *gorm.DB, item *Department) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	sk := rdb.GetShardingKey(tx)
@@ -91,22 +91,23 @@ func (srv *departmentSrvice) setCache(tx *gorm.DB, item *Department) {
 
 }
 
-// 通过id批量获取公司列表
-//
-// 当入参为nil时, 获取所有且有效的数据
-func (srv *departmentSrvice) GetByCode(tx *gorm.DB, codes []string) (items []*Department) {
+// 通过code获取有效的单个部门
+func (srv *departmentService) GetByCode(tx *gorm.DB, code string) (items *Department) {
+	srv.lock.RLock()
+	defer srv.lock.RUnlock()
+	sk := rdb.GetShardingKey(tx)
+	if srv.codeMap[sk] != nil && srv.codeMap[sk][code] != nil && srv.codeMap[sk][code].Status == 1 {
+		return srv.codeMap[sk][code]
+	}
+	return
+}
+
+// 获取code列表获取多个有效的部门
+func (srv *departmentService) GetByCodes(tx *gorm.DB, codes []string) (items []*Department) {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
 	sk := rdb.GetShardingKey(tx)
 	items = make([]*Department, 0, 10)
-	if codes == nil {
-		for _, item := range srv.codeMap[sk] {
-			if item.Status == 1 {
-				items = append(items, item)
-			}
-		}
-		return
-	}
 
 	for _, code := range codes {
 		item := srv.codeMap[sk][code]
@@ -117,8 +118,22 @@ func (srv *departmentSrvice) GetByCode(tx *gorm.DB, codes []string) (items []*De
 	return
 }
 
+// 获取code列表获取所有有效的部门
+func (srv *departmentService) GetAll(tx *gorm.DB, codes []string) (items []*Department) {
+	srv.lock.RLock()
+	defer srv.lock.RUnlock()
+	sk := rdb.GetShardingKey(tx)
+	items = make([]*Department, 0, 10)
+	for _, item := range srv.codeMap[sk] {
+		if item.Status == 1 {
+			items = append(items, item)
+		}
+	}
+	return
+}
+
 // 按照id批量删除缓存
-func (srv *departmentSrvice) deleteByID(tx *gorm.DB, ids []uint) {
+func (srv *departmentService) deleteByID(tx *gorm.DB, ids []uint) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	sk := rdb.GetShardingKey(tx)
@@ -138,7 +153,7 @@ func (srv *departmentSrvice) deleteByID(tx *gorm.DB, ids []uint) {
 // 以公司为分区, 不同公司的数据进行分开
 //
 // 同时创建缓存
-func (srv *departmentSrvice) Create(tx *gorm.DB, param *departmentAddParams) (err error) {
+func (srv *departmentService) Create(tx *gorm.DB, param *departmentAddParams) (err error) {
 	model := &Department{
 		DepartmentCode:        param.DepartmentCode,
 		DepartmentName:        param.DepartmentName,
@@ -148,9 +163,8 @@ func (srv *departmentSrvice) Create(tx *gorm.DB, param *departmentAddParams) (er
 	}
 
 	if model.DepartmentParentCode != "" {
-		pmodel := &Department{}
-		err = tx.Table(model.TableName()).Where("department_code = ? and status = 1", model.DepartmentParentCode).First(pmodel).Error
-		if err != nil || pmodel.DepartmentCode == "" {
+
+		if srv.GetByCode(tx, model.DepartmentParentCode) == nil {
 			return errorx.New("无有效的父级code")
 		}
 	}
@@ -164,7 +178,7 @@ func (srv *departmentSrvice) Create(tx *gorm.DB, param *departmentAddParams) (er
 // 删除部门, 软删除
 //
 // 同时会删除部门缓存
-func (srv *departmentSrvice) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err error) {
+func (srv *departmentService) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err error) {
 	model := &Department{}
 
 	err = tx.Model(model).Where("id in (?)", param.ID).Delete(model).Error
@@ -181,7 +195,7 @@ func (srv *departmentSrvice) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err e
 // 更新部门, 通过id批量更新
 //
 // 同时会更新缓存
-func (srv *departmentSrvice) UpdateByID(tx *gorm.DB, param *departmentEditParams) (err error) {
+func (srv *departmentService) UpdateByID(tx *gorm.DB, param *departmentEditParams) (err error) {
 	model := &Department{
 		DepartmentName:        param.DepartmentName,
 		DepartmentComment:     param.DepartmentComment,
@@ -191,11 +205,7 @@ func (srv *departmentSrvice) UpdateByID(tx *gorm.DB, param *departmentEditParams
 	model.Status = param.Status
 
 	if model.DepartmentParentCode != "" {
-		pmodel := &Department{}
-		nTx := srv.core.RDB().DB().Where("1=1")
-		rdb.CopyCtx(tx, nTx)
-		err = nTx.Table(model.TableName()).Where("department_code = ? and status = 1", model.DepartmentParentCode).First(pmodel).Error
-		if err != nil || pmodel.DepartmentCode == "" {
+		if srv.GetByCode(tx, model.DepartmentParentCode) == nil {
 			return errorx.New("无有效的上级code")
 		}
 	}
@@ -217,7 +227,7 @@ func (srv *departmentSrvice) UpdateByID(tx *gorm.DB, param *departmentEditParams
 // 分别生成list结构的数据表(前端展示用), 包含所有子节点的map(查询子级时使用)
 //
 // 当更新,新增,删除时, 该函数均需要重新执行以更新缓存
-func (srv *departmentSrvice) GenDepartmentTree(tx *gorm.DB) {
+func (srv *departmentService) GenDepartmentTree(tx *gorm.DB) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 
@@ -277,16 +287,16 @@ func (srv *departmentSrvice) GenDepartmentTree(tx *gorm.DB) {
 		}
 	}
 
-	DepartmentSrvice.allChildren[sk] = allChildrenMap
-	DepartmentSrvice.treeList[sk] = treeList
+	DepartmentService.allChildren[sk] = allChildrenMap
+	DepartmentService.treeList[sk] = treeList
 }
 
-func (srv *departmentSrvice) TreeList(tx *gorm.DB) []*departmentTree {
+func (srv *departmentService) TreeList(tx *gorm.DB) []*departmentTree {
 	return srv.treeList[rdb.GetShardingKey(tx)]
 }
 
 // 查询维度
-func (srv *departmentSrvice) DimList(tx *gorm.DB) (result []map[string]interface{}) {
+func (srv *departmentService) DimList(tx *gorm.DB) (result []map[string]interface{}) {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
 	sk := rdb.GetShardingKey(tx)
@@ -295,11 +305,11 @@ func (srv *departmentSrvice) DimList(tx *gorm.DB) (result []map[string]interface
 }
 
 // 生成维度信息, 简化变量生成的次数, 减少垃圾回收次数
-func (srv *departmentSrvice) genDimList(tx *gorm.DB) {
+func (srv *departmentService) genDimList(tx *gorm.DB) {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
 	sk := rdb.GetShardingKey(tx)
-	result := make([]map[string]interface{}, 10)
+	result := make([]map[string]interface{}, 0, 10)
 	for _, item := range srv.idMap[sk] {
 		result = append(result, map[string]interface{}{
 			"code":   item.DepartmentCode,
@@ -311,7 +321,7 @@ func (srv *departmentSrvice) genDimList(tx *gorm.DB) {
 }
 
 // 获取所有子级部门
-func (srv *departmentSrvice) GetAllChildren(tx *gorm.DB, dept_code string) map[string]*departmentTree {
+func (srv *departmentService) GetAllChildren(tx *gorm.DB, dept_code string) map[string]*departmentTree {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
 	sk := rdb.GetShardingKey(tx)

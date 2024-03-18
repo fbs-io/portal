@@ -2,101 +2,18 @@
  * @Author: reel
  * @Date: 2023-07-18 07:44:55
  * @LastEditors: reel
- * @LastEditTime: 2023-12-30 20:59:23
+ * @LastEditTime: 2024-03-17 16:22:49
  * @Description: 请填写简介
  */
 package auth
 
 import (
 	"portal/pkg/sequence"
-	"sync"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/env"
-	"gorm.io/gorm"
+	"github.com/fbs-io/core/store/rdb"
 )
-
-var (
-	userMap = make(map[string]*User, 100)
-	roleMap = make(map[uint]*Role, 100)
-	lock    = &sync.RWMutex{}
-)
-
-const (
-
-	// 用户缓存刷新方式
-	// 不刷新
-	REFRESH_NOT int8 = iota
-	// 刷新user
-	REFRESH_USRE
-	// 刷新user和菜单
-	REFRESH_ALL
-)
-
-func SetUser(auth string, user *User) {
-	lock.Lock()
-	defer lock.Unlock()
-	userMap[auth] = user
-}
-
-func GetUser(auth string, ctx core.Context, refresh int8) (user *User) {
-	lock.RLock()
-	defer lock.RUnlock()
-	user = userMap[auth]
-	if refresh == REFRESH_NOT {
-		if user == nil {
-			user = &User{Account: auth}
-			err := ctx.NewTX().Model(user).Where("account = (?)", auth).Find(user).Error
-			if err != nil {
-				return nil
-			}
-			user.Menu, user.Permissions, _ = getMenuTree(ctx, user, QUERY_MENU_MODE_INFO)
-		}
-	}
-
-	if refresh >= REFRESH_USRE {
-		user = nil
-	}
-	if user == nil {
-		user = &User{Account: auth}
-		err := ctx.NewTX().Model(user).Where("account = (?)", auth).Find(user).Error
-		if err != nil {
-			return nil
-		}
-
-		// 继续判断是否有分区code, 如果无法从上下文获取code
-		// 则尝试使用用户自带公司列表的第一个值作为公司code用于分区传递给上下文
-		if ctx.CtxGet(core.CTX_SHARDING_KEY) == nil && user.Company != nil && len(user.Company) > 0 {
-			if len(user.Company) > 0 && user.Company[0] != nil {
-				ctx.CtxSet(core.CTX_SHARDING_KEY, user.Company[0].(string))
-			}
-		}
-		if refresh == REFRESH_ALL || user.Permissions == nil {
-			user.Menu, user.Permissions, _ = getMenuTree(ctx, user, QUERY_MENU_MODE_INFO)
-		}
-	}
-	return
-}
-
-func SetRole(id uint, role *Role) {
-	lock.Lock()
-	defer lock.Unlock()
-	roleMap[id] = role
-}
-
-func GetRole(id uint, tx *gorm.DB) (role *Role) {
-	lock.RLock()
-	defer lock.RUnlock()
-	role = roleMap[id]
-	if role == nil {
-		role = &Role{}
-		err := tx.Model(role).Where("id = (?)", id).Find(role).Error
-		if err != nil {
-			return nil
-		}
-	}
-	return
-}
 
 func New(route core.RouterGroup) {
 	// 角色code生成器
@@ -111,9 +28,10 @@ func New(route core.RouterGroup) {
 			Super:    "Y",
 		}).Error
 	})
-	r := &Role{}
-	// tx.Register(r).AddShardingTable(r.TableName())
-	tx.Register(r)
+
+	tx.Register(&Role{})
+	tx.Register(&RlatUserRole{})
+	tx.Register(&RlatUserCompany{})
 	tx.Register(&RlatUserPosition{})
 
 	auth := route.Group("auth", "用户中心").WithMeta("icon", "el-icon-stamp")
@@ -126,9 +44,9 @@ func New(route core.RouterGroup) {
 		// 允许鉴权例外
 		info.POST("login", "登陆", loginParams{}, login()).WithAllowSignature()
 		// 登陆前获取用户的公司列表
-		info.GET("company", "获取公司列表", userCompanyParams{}, getCompany()).WithAllowSignature().WithPermission(core.SOURCE_TYPE_UNLIMITED)
-		// 登陆后获取用户的公司列表
-		info.GET("allowcompany", "获取公司列表", userCompanyParams{}, getCompany()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
+		info.GET("company", "获取公司列表", userCompanyParams{}, getCompanyAndPosition()).WithAllowSignature().WithPermission(core.SOURCE_TYPE_UNLIMITED)
+		// 登陆后获取用户的公司列表和岗位列表
+		info.GET("allowcompany", "获取公司列表", userCompanyParams{}, getCompanyAndPosition()).WithPermission(core.SOURCE_TYPE_UNLIMITED)
 		// 个人账户更改密码不受限
 		info.POST("chpwd", "变更密码", userChPwdParams{}, chpwd()).WithPermission(core.SOURCE_TYPE_UNPERMISSION)
 		// 个人用户修改信息不受限
@@ -146,9 +64,9 @@ func New(route core.RouterGroup) {
 		// 添加用户
 		users.PUT("add", "添加用户", userAddParams{}, userAdd())
 		// 更新用户
-		users.POST("edit", "更新用户", usersUpdateParams{}, usersUpdate())
+		users.POST("edit", "更新用户", usersEditParams{}, usersUpdate())
 		// 删除用户, 逻辑删除,
-		users.DELETE("delete", "删除用户", usersDeleteParams{}, usersDelete())
+		users.DELETE("delete", "删除用户", rdb.DeleteParams{}, usersDelete())
 	}
 
 	roles := auth.Group("roles", "角色管理").WithMeta("icon", "el-icon-switch-filled")
@@ -158,9 +76,9 @@ func New(route core.RouterGroup) {
 		// 单行添加
 		roles.PUT("add", "添加角色", roleAddParams{}, roleAdd(roleSeq))
 		// 更新用户
-		roles.POST("edit", "编辑角色", rolesUpdateParams{}, rolesUpdate())
+		roles.POST("edit", "编辑角色", roleEditParams{}, rolesUpdate())
 		// 删除用户, 逻辑删除
-		roles.DELETE("delete", "删除角色", rolesDeleteParams{}, rolesDelete())
+		roles.DELETE("delete", "删除角色", rdb.DeleteParams{}, rolesDelete())
 		// 权限菜单列表
 		roles.GET("permission", "菜单列表", nil, menusQueryWithPermission())
 	}
@@ -176,7 +94,14 @@ func New(route core.RouterGroup) {
 			// 更新菜单
 			menus.POST("edit", "更新菜单", menusUpdateParams{}, menusUpdate())
 			// 删除菜单, 逻辑删除
-			menus.DELETE("delete", "添加角色", menusDeleteParams{}, menusDelete())
+			menus.DELETE("delete", "添加角色", rdb.DeleteParams{}, menusDelete())
 		}
 	}
+
+	route.Core().AddStartJobList(func() error {
+		ResourceServiceInit(route.Core())
+		RoleServiceInit(route.Core())
+		UserServiceInit(route.Core())
+		return nil
+	})
 }

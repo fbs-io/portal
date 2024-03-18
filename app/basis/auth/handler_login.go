@@ -2,14 +2,12 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2024-01-15 00:46:08
+ * @LastEditTime: 2024-03-18 22:02:52
  * @Description: 请填写简介
  */
 package auth
 
 import (
-	"fmt"
-	"portal/app/basis/org"
 	"portal/pkg/consts"
 
 	"github.com/fbs-io/core"
@@ -38,8 +36,7 @@ func login() core.HandlerFunc {
 			ctx.CtxSet(core.CTX_SHARDING_KEY, p.Company)
 		}
 
-		user := GetUser(p.Account, ctx, REFRESH_ALL)
-
+		user := UserService.GetByCode(p.Account)
 		if user == nil {
 			ctx.JSON(errno.ERRNO_AUTH_USER_OR_PWD)
 			return
@@ -53,18 +50,19 @@ func login() core.HandlerFunc {
 		// session 设置
 		sessionKey := session.GenSessionKey()
 		ctx.Core().Session().SetWithCsrfToken(ctx.Ctx().Writer, sessionKey, user.Account)
-
+		menu, _, permission, _ := UserService.GetResourcePermission(ctx.TX(), user.Account)
 		result := map[string]interface{}{
 			"token":       sessionKey,
 			"userInfo":    user.UserInfo(),
-			"menu":        user.Menu,
-			"permissions": user.Permissions,
+			"menu":        menu,
+			"permissions": permission,
 		}
-		SetUser(user.Account, user)
 		if p.Company == "" && len(user.Company) > 0 {
-			p.Company = user.Company[0].(string)
+			p.Company = user.Company[0]
+		} else {
+			p.Company = ""
 		}
-		result["company"] = p.Company
+		result["company"] = "123"
 		// 设置公司code缓存
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(user.Account), p.Company)
 		ctx.JSON(errno.ERRNO_OK.WrapData(result).Notify())
@@ -75,116 +73,21 @@ type userCompanyParams struct {
 	Account string `form:"account"`
 }
 
-func getCompany() core.HandlerFunc {
-	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*userCompanyParams)
-		user := GetUser(param.Account, ctx, REFRESH_USRE)
-		if user == nil {
-			ctx.JSON(errno.ERRNO_OK)
-			return
-		}
-
-		var result = make([]map[string]interface{}, 0, 10)
-		// tx := ctx.NewTX()
-		companies := make([]string, 0, 10)
-
-		for _, c := range user.Company {
-			if c != nil {
-				companies = append(companies, c.(string))
-			}
-		}
-		if user.Super == "Y" {
-			companies = nil
-
-		}
-		companyList := org.CompanySrvice.GetByCode(companies)
-		for _, company := range companyList {
-			result = append(result, map[string]interface{}{
-				"company_code":       company.CompanyCode,
-				"company_name":       company.CompanyName,
-				"company_short_name": company.CompanyShortName,
-			})
-		}
-		// 设置/更新默认公司
-		company_code := ctx.Core().Cache().Get(consts.GenUserCompanyKey(user.Account))
-		var isCheck = false
-		if len(result) > 0 {
-			for _, item := range result {
-				if item["company_code"] == company_code {
-					isCheck = true
-				}
-			}
-			if !isCheck {
-				company_code = result[0]["company_code"].(string)
-			}
-		}
-
-		res := map[string]interface{}{
-			"companies": result,
-			"company":   company_code,
-		}
-		ctx.Core().Cache().Set(consts.GenUserCompanyKey(user.Account), company_code)
-		SetUser(user.Account, user)
-
-		// 岗位读取设置
-		rlat := make([]*RlatUserPosition, 0, 10)
-		ctx.NewTX().Where("account = ? ", user.Account).Find(&rlat)
-		position_codes := make([]string, 0, 100)
-		position_map := make(map[string]*RlatUserPosition, 10)
-		for _, r := range rlat {
-			position_codes = append(position_codes, r.PositionCode)
-			position_map[r.PositionCode] = r
-			if r.IsPosition == 1 {
-				res["position"] = r.PositionCode
-			}
-		}
-		position_code := ctx.Core().Cache().Get(consts.GenUserPositionKey(user.Account, company_code))
-		if position_code != "" {
-			res["position"] = position_code
-		}
-
-		positions := make([]*org.Position, 0, 100)
-
-		ctx.NewTX().Where("position_code in ? ", position_codes).Find(&positions)
-
-		department_codes := make([]string, 0, 10)
-		deparment_map := make(map[string]*org.Position, 10)
-		for _, position := range positions {
-			department_codes = append(department_codes, position.DepartmentCode)
-			deparment_map[position.DepartmentCode] = position
-		}
-
-		departments := make([]*org.Department, 0, 10)
-		positionList := make([]map[string]string, 0, 10)
-		ctx.NewTX().Where("department_code in ? ", department_codes).Find(&departments)
-		for _, department := range departments {
-			positionList = append(positionList, map[string]string{
-				"position_code": deparment_map[department.DepartmentCode].PositionCode,
-				"position_name": fmt.Sprintf("%s - %s", department.DepartmentName, deparment_map[department.DepartmentCode].PositionName),
-			})
-		}
-		res["positions"] = positionList
-		if res["position"] != nil {
-			ctx.Core().Cache().Set(consts.GenUserPositionKey(user.Account, company_code), res["position"].(string))
-		}
-		ctx.JSON(errno.ERRNO_OK.WrapData(res))
-	}
-}
-
 type setDefaultCompanyParams struct {
-	Account string `json:"account"`
-	Company string `json:"company"`
+	Account string `json:"account" binding:"required"`
+	Company string `json:"company" binding:"required"`
 }
 
+// 设置默认法人公司
 func setDefaultCompany() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*setDefaultCompanyParams)
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(param.Account), param.Company)
 		ctx.CtxSet(core.CTX_SHARDING_KEY, param.Company)
-		user := GetUser(param.Account, ctx, REFRESH_USRE)
+		menu, _, Permissions, _ := UserService.GetResourcePermission(ctx.NewTX(), param.Account)
 		result := map[string]interface{}{
-			"menu":        user.Menu,
-			"permissions": user.Permissions,
+			"menu":        menu,
+			"permissions": Permissions,
 		}
 		ctx.JSON(errno.ERRNO_OK.WrapData(result))
 	}
@@ -195,6 +98,7 @@ type setDefaultPositionParams struct {
 	Position string `json:"position"`
 }
 
+// 设置默认岗位信息
 func setDefaultPosition() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*setDefaultPositionParams)
@@ -203,5 +107,22 @@ func setDefaultPosition() core.HandlerFunc {
 		ctx.Core().Cache().Set(consts.GenUserPositionKey(param.Account, company_code), param.Position)
 		ctx.CtxSet(core.CTX_DATA_PERMISSION_KEY, param.Position)
 		ctx.JSON(errno.ERRNO_OK)
+	}
+}
+
+// 页面刷新后, 获取公司(分区)和岗位(数据权限)
+//
+// 不在登陆时返回前端并缓存以便及时获取信息,减少用户清缓存/重新登陆步骤
+//
+// 每次刷新整体页面或在服务端重启后时, 均可以获取最新的信息,而无需登陆
+func getCompanyAndPosition() core.HandlerFunc {
+	return func(ctx core.Context) {
+		param := ctx.CtxGetParams().(*userCompanyParams)
+		res, err := UserService.getOrgPermission(ctx.TX(), param.Account)
+		if err != nil {
+			ctx.JSON(errno.ERRNO_CACHE.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(res))
 	}
 }

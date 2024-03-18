@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-21 22:20:41
  * @LastEditors: reel
- * @LastEditTime: 2024-01-16 23:09:12
+ * @LastEditTime: 2024-01-17 22:26:02
  * @Description: 岗位操作, 通过岗位定位用户权限, 如果没有权限, 则只能看到自己所属的内容
  */
 package org
@@ -25,7 +25,7 @@ func positionAdd(positionSeq sequence.Sequence) core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无法获取或生成岗位代码")))
 			return
 		}
-		err := PositionSrvice.Create(ctx.TX(), param)
+		err := PositionService.Create(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
 			return
@@ -39,7 +39,7 @@ func positionEdit() core.HandlerFunc {
 
 		param := ctx.CtxGetParams().(*positionEditParams)
 
-		err := PositionSrvice.UpdateByID(ctx.TX(), param)
+		err := PositionService.UpdateByID(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
 			return
@@ -52,28 +52,18 @@ func positionEdit() core.HandlerFunc {
 func positionList() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*positionQueryParams)
-		model := &Position{}
 
 		// 使用子查询, 优化分页查询
 		tx := ctx.TX(
 			core.SetTxMode(core.TX_QRY_MODE_SUBID),
-			core.SetTxSubTable(model.TableName()),
 		)
-		modelList := make([]*Position, 0, 100)
+		data, err := PositionService.Query(tx, param)
 
-		err := tx.Model(model).Find(&modelList).Error
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
 		}
-		var count int64
-		ctx.TX().Model(model).Offset(-1).Limit(-1).Count(&count)
-		data := map[string]interface{}{
-			"page_num":  param.PageNum,
-			"page_size": param.PageSize,
-			"total":     count,
-			"rows":      modelList,
-		}
+
 		ctx.JSON(errno.ERRNO_OK.WrapData(data))
 	}
 }

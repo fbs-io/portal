@@ -2,14 +2,14 @@
  * @Author: reel
  * @Date: 2023-10-05 19:59:11
  * @LastEditors: reel
- * @LastEditTime: 2024-01-16 23:48:34
+ * @LastEditTime: 2024-03-15 20:43:10
  * @Description: 维度信息管理, 用于管理整个app的维度信息, 由多个表组合而成
  */
 package app
 
 import (
+	"portal/app/basis/auth"
 	"portal/app/basis/org"
-	"portal/pkg/consts"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
@@ -42,9 +42,7 @@ func dimList() core.HandlerFunc {
 	return func(ctx core.Context) {
 		params := ctx.CtxGetParams().(*dimensionParams)
 
-		// TODO: 增加tx的上下文,
-		tx := ctx.TX()
-		result, err := queryDimList(tx, params.DimType)
+		result, err := queryDimList(ctx.NewTX(), params.DimType)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
@@ -63,14 +61,13 @@ func queryDimList(tx *gorm.DB, dimType string) (result interface{}, err error) {
 
 	switch dimType {
 	case DIM_TYPE_COMPANY:
-		result = org.CompanySrvice.DimList()
+		result = org.CompanyService.DimList()
 	case DIM_TYPE_DEPARTMENT:
-		result = org.DepartmentSrvice.DimList(tx)
+		result = org.DepartmentService.DimList(tx)
 	case DIM_TYPE_ROLE:
-		tx = tx.Table(consts.TABLE_BASIS_AUTH_ROLE).Select("code", "label as name", "status")
-		err = tx.Where("status > 0 ").Find(&result).Error
+		result = auth.RoleService.DimList(tx)
 	case DIM_TYPE_POSITION:
-		result = org.PositionSrvice.DimList(tx)
+		result = org.PositionService.DimList(tx)
 	default:
 		err = errorx.New("dim_type不合法, 请输入正确的值")
 	}

@@ -277,7 +277,6 @@
 		},
 		mounted(){
 			this.getCompanies()
-			// this.company = this.$TOOL.data.get("USER_COMPANY").company_name
 		},
 		methods: {
 			openSetting(){
@@ -331,10 +330,10 @@
 			async getCompanies(){
 				var user  = this.$TOOL.data.get("USER_INFO")
 				var res = await this.$API.basis_auth.user.getAllowCompany.get({account:user.account})
-				if (res.details.positions && res.details.positions.length>=1){
+				if (res.details && res.details.positions && res.details.positions.length>=1){
 					this.positions = res.details.positions
 				}
-				if (res.details.companies && res.details.companies.length>=1){
+				if (res.details && res.details.companies && res.details.companies.length>=1){
 					this.companies = res.details.companies
 					this.formatCompany(res.details.company,res.details.position)
 				}
@@ -372,8 +371,8 @@
 					this.formatCompany(company)
 					this.$TOOL.data.set("MENU",res.details.menu)
 					this.$TOOL.data.set("PERMISSIONS",res.details.permissions)
+					this.$router.go(0)
 				}
-				this.$router.go(0)
 			},
 			async selectPosition(position){
 				var user  = this.$TOOL.data.get("USER_INFO")

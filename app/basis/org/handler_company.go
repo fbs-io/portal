@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-09-19 04:34:39
  * @LastEditors: reel
- * @LastEditTime: 2024-01-15 22:39:26
+ * @LastEditTime: 2024-01-17 22:28:44
  * @Description: 公司管理, 系统按公司别进行数据隔离
  */
 package org
@@ -27,7 +27,7 @@ func companyAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 			return
 		}
 
-		err := CompanySrvice.Create(ctx.TX(), param)
+		err := CompanyService.Create(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB.WrapError(err))
 			return
@@ -40,7 +40,7 @@ func companyEdit() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*companyEditParams)
 
-		err := CompanySrvice.UpdateByID(ctx.TX(), param)
+		err := CompanyService.UpdateByID(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_UPDATE.WrapError(err))
 			return
@@ -52,28 +52,18 @@ func companyEdit() core.HandlerFunc {
 func companyList() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*companyQueryParams)
-		comoany := &Company{}
 
 		// 使用子查询, 优化分页查询
 		tx := ctx.TX(
 			core.SetTxMode(core.TX_QRY_MODE_SUBID),
-			core.SetTxSubTable(comoany.TableName()),
 		)
-		comoanys := make([]*Company, 0, 100)
 
-		err := tx.Model(comoany).Find(&comoanys).Error
+		data, err := CompanyService.Query(tx, param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
 			return
 		}
-		var count int64
-		ctx.TX().Model(comoany).Offset(-1).Limit(-1).Count(&count)
-		data := map[string]interface{}{
-			"page_num":  param.PageNum,
-			"page_size": param.PageSize,
-			"total":     count,
-			"rows":      comoanys,
-		}
+
 		ctx.JSON(errno.ERRNO_OK.WrapData(data))
 	}
 }
@@ -83,7 +73,7 @@ func companyDelete() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*rdb.DeleteParams)
 
-		err := CompanySrvice.Delete(ctx.TX(), param)
+		err := CompanyService.Delete(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return

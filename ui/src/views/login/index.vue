@@ -74,6 +74,7 @@
 			this.$TOOL.data.remove("USER_INFO")
 			this.$TOOL.data.remove("MENU")
 			this.$TOOL.data.remove("PERMISSIONS")
+			this.$TOOL.data.remove("USER_COMPANY")
 			this.$TOOL.data.remove("grid")
 			this.$store.commit("clearViewTags")
 			this.$store.commit("clearKeepLive")

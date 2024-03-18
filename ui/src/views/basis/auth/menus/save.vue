@@ -153,15 +153,17 @@
 			//简单化菜单
 			treeToMap(tree){
 				const map = []
-				tree.forEach(item => {
-					var obj = {
-						id: item.id,
-						parentId: item.parentId,
-						title: item.meta.title,
-						children: item.children&&item.children.length>0 ? this.treeToMap(item.children) : null
-					}
-					map.push(obj)
-				})
+				if (tree!=undefined && tree.length>0){
+					tree.forEach(item => {
+						var obj = {
+							id: item.id,
+							parentId: item.parentId,
+							title: item.meta.title,
+							children: item.children&&item.children.length>0 ? this.treeToMap(item.children) : null
+						}
+						map.push(obj)
+					})
+				}
 				return map
 			},
 			//保存

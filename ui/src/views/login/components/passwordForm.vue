@@ -2,13 +2,13 @@
  * @Author: reel
  * @Date: 2023-06-04 15:27:47
  * @LastEditors: reel
- * @LastEditTime: 2023-10-17 20:22:21
+ * @LastEditTime: 2024-03-17 18:51:50
  * @Description: 登陆组件
 -->
 <template>
 	<el-form ref="loginForm" :model="form" :rules="rules" label-width="0" size="large">
 		<el-form-item prop="user">
-			<el-input v-model="form.user" prefix-icon="el-icon-user" @mouseleave="mouseLeave"  :placeholder="$t('login.userPlaceholder')">
+			<el-input v-model="form.user" prefix-icon="el-icon-user" @blur="mouseLeave"  :placeholder="$t('login.userPlaceholder')">
 			</el-input>
 		</el-form-item>
 		<el-form-item  prop="company" v-if="isCompany">
@@ -100,13 +100,14 @@
 			},
 			async mouseLeave(){
 				var res = await this.$API.basis_auth.user.getCompany.get({account:this.form.user})
-				console.log(res.details)
-				if (res.details.companies && res.details.companies.length>1){
-					this.isCompany = true
-				}else{
-					this.isCompany = false
+				if (res.details){
+					if (res.details.companies && res.details.companies.length>1){
+						this.isCompany = true
+					}else{
+						this.isCompany = false
+					}
+					this.companies = res.details.companies
 				}
-				this.companies = res.details.companies
 			}
 		}
 	}

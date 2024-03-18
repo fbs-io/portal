@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-10-28 10:29:01
  * @LastEditors: reel
- * @LastEditTime: 2024-01-16 23:45:10
+ * @LastEditTime: 2024-01-17 21:14:21
  * @Description: 部门操作
  */
 package org
@@ -27,7 +27,7 @@ func departmentAdd(orgSeq sequence.Sequence) core.HandlerFunc {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(errorx.New("无法获取或生成公司代码")))
 			return
 		}
-		err := DepartmentSrvice.Create(ctx.TX(), param)
+		err := DepartmentService.Create(ctx.TX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
 			return
@@ -42,7 +42,7 @@ func departmentEdit() core.HandlerFunc {
 
 		param := ctx.CtxGetParams().(*departmentEditParams)
 
-		err := DepartmentSrvice.UpdateByID(ctx.TX(), param)
+		err := DepartmentService.UpdateByID(ctx.TX(), param)
 
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_CREATE.WrapError(err))
@@ -56,7 +56,7 @@ func departmentEdit() core.HandlerFunc {
 func getDepartmentTree() core.HandlerFunc {
 	return func(ctx core.Context) {
 
-		modelTree := DepartmentSrvice.TreeList(ctx.TX())
+		modelTree := DepartmentService.TreeList(ctx.TX())
 		data := map[string]interface{}{
 			"rows": modelTree,
 		}
@@ -70,7 +70,7 @@ func departmentDelete() core.HandlerFunc {
 		param := ctx.CtxGetParams().(*rdb.DeleteParams)
 		tx := ctx.TX()
 
-		err := DepartmentSrvice.Delete(tx, param)
+		err := DepartmentService.Delete(tx, param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return

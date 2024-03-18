@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2024-01-14 22:23:07
  * @LastEditors: reel
- * @LastEditTime: 2024-01-16 23:41:57
+ * @LastEditTime: 2024-03-18 22:00:10
  * @Description: 公司表相关逻辑处理
  */
 package org
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type companySrvice struct {
+type companyService struct {
 	lock    *sync.RWMutex
 	core    core.Core
 	idMap   map[uint]*Company
@@ -24,11 +24,11 @@ type companySrvice struct {
 	dimList []map[string]interface{}
 }
 
-var CompanySrvice *companySrvice
+var CompanyService *companyService
 
 // 初始化
-func CompanySrviceInit(c core.Core) {
-	CompanySrvice = &companySrvice{
+func CompanyServiceInit(c core.Core) {
+	CompanyService = &companyService{
 		core:    c,
 		lock:    &sync.RWMutex{},
 		idMap:   make(map[uint]*Company, 100),
@@ -36,15 +36,16 @@ func CompanySrviceInit(c core.Core) {
 		dimList: make([]map[string]interface{}, 0, 100),
 	}
 	var companys = make([]*Company, 0, 100)
-	c.RDB().DB().Where("deleted_at = 0").Order("id").Find(&companys)
+	c.RDB().DB().Order("id").Find(&companys)
 
 	for _, company := range companys {
-		CompanySrvice.setCache(company)
+		CompanyService.setCache(company)
 	}
+	CompanyService.genDimList()
 }
 
 // 创建缓存
-func (srv *companySrvice) setCache(item *Company) {
+func (srv *companyService) setCache(item *Company) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	oItem := srv.codeMap[item.CompanyCode]
@@ -64,37 +65,53 @@ func (srv *companySrvice) setCache(item *Company) {
 	srv.idMap[item.ID] = item
 }
 
-// 通过id批量获取公司列表
+// 通过code列表获取有效公司
 //
 // 当入参为nil时, 获取所有且有效的数据
-func (srv *companySrvice) GetByCode(codes []string) (companys []*Company) {
+func (srv *companyService) GetByCodes(codes []string) (list []*Company) {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
 
-	companys = make([]*Company, 0, 10)
-	if codes == nil {
-		for _, company := range srv.codeMap {
-			if company.Status == 1 {
-				companys = append(companys, company)
-			}
-		}
-		return
-	}
+	list = make([]*Company, 0, 10)
 
 	for _, code := range codes {
 		company := srv.codeMap[code]
 		if company != nil && company.Status == 1 {
-			companys = append(companys, srv.codeMap[code])
+			list = append(list, srv.codeMap[code])
 		}
 	}
 	return
 }
 
+// 获取所有有效的公司
+// 优化使用其他方法
+func (srv *companyService) GetAll() (list []*Company) {
+	srv.lock.RLock()
+	defer srv.lock.RUnlock()
+
+	list = make([]*Company, 0, 10)
+	for _, item := range srv.idMap {
+		if item.Status == 1 {
+			list = append(list, item)
+		}
+	}
+	return
+}
+
+// 只获取有效的公司
+func (srv *companyService) GetByCode(code string) (item *Company) {
+	srv.lock.RLock()
+	defer srv.lock.RUnlock()
+	if srv.codeMap[code].Status == 1 {
+		return srv.codeMap[code]
+	}
+	return
+}
+
 // 按照id批量删除缓存
-func (srv *companySrvice) deleteByID(ids []uint) {
+func (srv *companyService) deleteByID(ids []uint) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
-	// companys = make([]*Company, 10)
 	for _, id := range ids {
 		company := srv.idMap[id]
 		if company != nil {
@@ -111,7 +128,7 @@ func (srv *companySrvice) deleteByID(ids []uint) {
 // 以公司为分区, 不同公司的数据进行分开
 //
 // 同时创建缓存
-func (srv *companySrvice) Create(tx *gorm.DB, param *companyAddParams) (err error) {
+func (srv *companyService) Create(tx *gorm.DB, param *companyAddParams) (err error) {
 	company := &Company{
 		CompanyCode:      param.CompanyCode,
 		CompanyName:      param.CompanyName,
@@ -136,7 +153,7 @@ func (srv *companySrvice) Create(tx *gorm.DB, param *companyAddParams) (err erro
 // 删除公司, 软删除
 //
 // 同时会删除公司缓存
-func (srv *companySrvice) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err error) {
+func (srv *companyService) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err error) {
 	company := &Company{}
 
 	err = tx.Model(company).Where("id in (?)", param.ID).Delete(company).Error
@@ -151,7 +168,7 @@ func (srv *companySrvice) Delete(tx *gorm.DB, param *rdb.DeleteParams) (err erro
 // 更新公司, 通过id批量更新
 //
 // 同时会更新缓存
-func (srv *companySrvice) UpdateByID(tx *gorm.DB, param *companyEditParams) (err error) {
+func (srv *companyService) UpdateByID(tx *gorm.DB, param *companyEditParams) (err error) {
 	company := &Company{
 		CompanyName:      param.CompanyName,
 		CompanyShortName: param.CompanyShortName,
@@ -171,17 +188,39 @@ func (srv *companySrvice) UpdateByID(tx *gorm.DB, param *companyEditParams) (err
 	return
 }
 
+// 查询
+//
+// TODO: 缓存结果
+func (srv *companyService) Query(tx *gorm.DB, param *companyQueryParams) (data interface{}, err error) {
+	model := &Company{}
+	list := make([]*Company, 0, 100)
+
+	var count int64
+	err = tx.Model(model).Find(&list).Offset(-1).Limit(-1).Count(&count).Error
+	if err != nil {
+		return
+	}
+
+	data = map[string]interface{}{
+		"page_num":  param.PageNum,
+		"page_size": param.PageSize,
+		"total":     count,
+		"rows":      list,
+	}
+	return
+}
+
 // 查询维度
-func (srv *companySrvice) DimList() (result []map[string]interface{}) {
+func (srv *companyService) DimList() (result []map[string]interface{}) {
 	return srv.dimList
 }
 
 // 生成维度信息, 简化变量生成的次数, 减少垃圾回收次数
-func (srv *companySrvice) genDimList() {
+func (srv *companyService) genDimList() {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 
-	result := make([]map[string]interface{}, 10)
+	result := make([]map[string]interface{}, 0, 10)
 	for _, company := range srv.idMap {
 		result = append(result, map[string]interface{}{
 			"code":   company.CompanyCode,

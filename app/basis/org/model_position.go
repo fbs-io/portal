@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-20 23:37:54
  * @LastEditors: reel
- * @LastEditTime: 2024-01-16 22:44:43
+ * @LastEditTime: 2024-01-20 15:30:48
  * @Description: 岗位管理, 岗位关联部门, 同时可以设置相关数据权限, 审批权限等
  */
 package org
@@ -20,6 +20,7 @@ type Position struct {
 	PositionComment      string           `gorm:"comment:岗位描述" json:"position_comment"`
 	PositionParentCode   string           `gorm:"comment:上级岗位" json:"position_parent_code"`
 	DepartmentCode       string           `gorm:"comment:部门code;index" json:"department_code"`
+	DeptPositionName     string           `gorm:"comment:带部门的岗位名称" json:"dept_position_name"`
 	JobCode              string           `gorm:"comment:职务code;index" json:"job_code"`
 	IsHead               int8             `gorm:"comment:是否是部门领导" json:"is_head"`
 	IsApprove            int8             `gorm:"comment:是否有审批权限" json:"is_approve"`
