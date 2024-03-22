@@ -81,7 +81,6 @@
 </template>
 
 <script>
-	import { ref } from 'vue';
 	export default {
 		emits: ['success', 'closed'],
 		data() {
@@ -119,8 +118,11 @@
 				],
 				//验证规则
 				rules: {
-					department_name: [
+					department_code: [
 						{required: true, message: '请输入部门名称'}
+					],
+					position_name: [
+						{required: true, message: '请输入岗位名称'}
 					],
 
 				},

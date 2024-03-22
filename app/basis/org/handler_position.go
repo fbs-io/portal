@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-12-21 22:20:41
  * @LastEditors: reel
- * @LastEditTime: 2024-01-17 22:26:02
+ * @LastEditTime: 2024-03-21 22:02:44
  * @Description: 岗位操作, 通过岗位定位用户权限, 如果没有权限, 则只能看到自己所属的内容
  */
 package org
@@ -13,6 +13,7 @@ import (
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/pkg/errno"
 	"github.com/fbs-io/core/pkg/errorx"
+	"github.com/fbs-io/core/store/rdb"
 )
 
 func positionAdd(positionSeq sequence.Sequence) core.HandlerFunc {
@@ -68,13 +69,10 @@ func positionList() core.HandlerFunc {
 	}
 }
 
-type positionDeleteParams struct {
-	ID []uint `json:"id" binding:"required" conditions:"-"`
-}
-
+// 删除岗位
 func positionDelete() core.HandlerFunc {
 	return func(ctx core.Context) {
-		param := ctx.CtxGetParams().(*positionDeleteParams)
+		param := ctx.CtxGetParams().(*rdb.DeleteParams)
 		tx := ctx.TX()
 
 		model := &Position{}

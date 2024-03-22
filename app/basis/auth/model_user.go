@@ -2,13 +2,14 @@
  * @Author: reel
  * @Date: 2023-07-18 06:41:14
  * @LastEditors: reel
- * @LastEditTime: 2024-03-17 10:01:33
+ * @LastEditTime: 2024-03-23 05:46:34
  * @Description: 用户表,管理用户信息
  */
 package auth
 
 import (
 	"portal/pkg/consts"
+	"sync"
 
 	"github.com/fbs-io/core"
 	"github.com/fbs-io/core/store/rdb"
@@ -33,24 +34,25 @@ type User struct {
 	Position1   map[string]string          `json:"position1" gorm:"-"`   // 主岗
 	Position2   map[string][]string        `json:"position2" gorm:"-"`   // 兼岗
 	UUID        string                     `gorm:"comment:uuid"`
+	lock        *sync.RWMutex              `json:"-" gorm:"-"`
 	rdb.Model
 }
 
 type UserList struct {
-	ID          uint     `json:"id"`
-	Account     string   `json:"account"`
-	NickName    string   `json:"nick_name"`
-	Email       string   `json:"email"`
-	IP          string   `json:"ip"`
-	Super       string   `json:"super"`
-	CreatedAt   uint64   `json:"created_at"`
-	Status      int8     `json:"status"`
-	Position1   string   `json:"position1" gorm:"-"` //主岗
-	Position2   []string `json:"position2" gorm:"-"` //兼岗
-	Positions   []string `json:"position" gorm:"-"`  //所有岗位
-	Departments []string `json:"departments" gorm:"-"`
-	Companies   []string `json:"companies" gorm:"-"`
-	Roles       []string `json:"roles" gorm:"-"`
+	ID         uint     `json:"id"`
+	Account    string   `json:"account"`
+	NickName   string   `json:"nick_name"`
+	Email      string   `json:"email"`
+	IP         string   `json:"ip"`
+	Super      string   `json:"super"`
+	CreatedAt  uint64   `json:"created_at"`
+	Status     int8     `json:"status"`
+	Position1  string   `json:"position1" gorm:"-"` //主岗
+	Position2  []string `json:"position2" gorm:"-"` //兼岗
+	Positions  []string `json:"positions" gorm:"-"` //所有岗位
+	Department []string `json:"department" gorm:"-"`
+	Company    []string `json:"company" gorm:"-"`
+	Role       []string `json:"role" gorm:"-"`
 }
 
 func (u *User) TableName() string {
@@ -72,31 +74,81 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 	return u.encodePwd()
 }
 
-// func (u *User) AfterFind(tx *gorm.DB) error {
-// 	// ci, ok := tx.Get(core.CTX_SHARDING_KEY)
-// 	// if ok && ci != nil {
-// 	// 	if u.Roles[ci.(string)] != nil {
-// 	// 		u.Role = u.Roles[ci.(string)].([]interface{})
-// 	// 	}
-// 	// }
-// 	// if u.Roles == nil || len(u.Roles) == 0 {
-// 	// 	u.Roles = make(rdb.ModeMapJson, 100)
-// 	// }
-// 	// return nil
-// }
+func (u *User) AfterFind(tx *gorm.DB) error {
+	u.lock = &sync.RWMutex{}
+	u.Company = make([]string, 0, 10)
+	u.Position1 = make(map[string]string, 100)
+	u.Position2 = make(map[string][]string, 100)
+	u.Roles = make(map[string][]string, 10)
+	u.Menu = make(map[string][]*core.Sources, 10)
+	u.ManageMenu = make(map[string][]*core.Sources, 10)
+	u.Permissions = make(map[string]map[string]bool, 10)
+	return nil
+}
 
-// func (u *UserList) AfterFind(tx *gorm.DB) error {
-// 	ci, ok := tx.Get(core.CTX_SHARDING_KEY)
+func (u *User) UpdateCompany(companys ...string) {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	if u.Company == nil {
+		u.Company = make([]string, 0, 10)
+	}
+	u.Company = append(u.Company, companys...)
+}
 
-// 	if ok && u.Roles[ci.(string)] != nil {
-// 		u.Role = u.Roles[ci.(string)].([]interface{})
-// 	}
+func (u *User) UpdateRole(sk string, role ...string) {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	if u.Roles == nil {
+		u.Roles = make(map[string][]string, 10)
+	}
+	if u.Roles[sk] == nil {
+		u.Roles[sk] = make([]string, 0, 10)
+	}
+	u.Roles[sk] = append(u.Roles[sk], role...)
+}
 
-// 	if u.Roles == nil || len(u.Roles) == 0 {
-// 		u.Roles = make(rdb.ModeMapJson, 100)
-// 	}
-// 	return nil
-// }
+func (u *User) UpdatePosition(sk string, positions ...*RlatUserPosition) {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	for _, position := range positions {
+		if position.Account != u.Account {
+			continue
+		}
+		if position.IsPosition == 1 {
+			if u.Position1 == nil {
+				u.Position1 = make(map[string]string, 10)
+			}
+			u.Position1[sk] = position.PositionCode
+		} else {
+			if u.Position2 == nil {
+				u.Position2 = make(map[string][]string, 10)
+			}
+			if u.Position2[sk] == nil {
+				u.Position2[sk] = make([]string, 0, 10)
+			}
+			u.Position2[sk] = append(u.Position2[sk], position.PositionCode)
+		}
+	}
+}
+
+func (u *User) DeleteCompany() {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	u.Company = nil
+}
+
+func (u *User) DeleteRoles(sk string) {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	u.Roles[sk] = nil
+}
+
+func (u *User) DeletePosition(sk string) {
+	u.lock.Lock()
+	defer u.lock.Unlock()
+	delete(u.Position1, sk)
+	u.Position2[sk] = make([]string, 0)
+}
 
 // User模型相关操作
 

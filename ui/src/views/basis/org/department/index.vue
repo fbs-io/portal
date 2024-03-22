@@ -5,12 +5,13 @@
 				<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
 				<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
 			</div>
-			<div class="right-panel">
+			<!-- 无需过滤 -->
+			<!-- <div class="right-panel">
 				<div class="right-panel-search">
 					<el-input v-model="search.department_name" placeholder="部门名称" clearable></el-input>
 					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
 				</div>
-			</div>
+			</div> -->
 		</el-header>
 		<el-main class="nopadding">
 			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>

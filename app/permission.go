@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-20 15:42:11
  * @LastEditors: reel
- * @LastEditTime: 2024-01-21 09:26:51
+ * @LastEditTime: 2024-03-22 18:59:33
  * @Description: 权限校验中间件
  */
 package app
@@ -68,6 +68,14 @@ func permissionMiddleware(c core.Core) gin.HandlerFunc {
 
 		// 判断接口的权限表
 		permissionKey := genPermissionKey(ctx)
+		if user.Permissions == nil {
+			user.Permissions = make(map[string]map[string]bool, 10)
+		}
+		if user.Permissions[company] == nil {
+			tx := c.RDB().DB().Where("1=1")
+			tx.Set(core.CTX_SHARDING_KEY, company)
+			_, _, user.Permissions[company], _ = auth.UserService.GetResourcePermission(tx, user.Account)
+		}
 		if user.Super != "Y" && !user.Permissions[company][permissionKey] {
 			ctx.JSON(200, errno.ERRNO_AUTH_PERMISSION.ToMap())
 			ctx.Abort()

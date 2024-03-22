@@ -21,6 +21,7 @@ const (
 	TABLE_BASIS_RLAT_USER_ROLE     = "e_basis_rlat_user_role"     // 用户和角色的关系表
 	TABLE_BASIS_RLAT_USER_COMPANY  = "e_basis_rlat_user_company"  // 用户和公司的关系表
 	TABLE_BASIS_RLAT_USER_POSITION = "e_basis_rlat_user_position" // 用户和岗位的关系表
+	TABLE_BASIS_RLAT_ROLE_RESOURCE = "e_basis_rlat_role_resource" // 角色和资源的关系表
 	// ↑↑↑↑↑↑↑↑↑↑基础配置↑↑↑↑↑↑↑↑↑↑↑↑
 
 	// ↓↓↓↓↓↓↓↓↓↓财务管理↓↓↓↓↓↓↓↓↓↓↓↓

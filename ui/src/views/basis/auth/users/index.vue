@@ -52,7 +52,7 @@
 						<el-table-column label="姓名" prop="nick_name" width="130" sortable='custom'></el-table-column>
 						<el-table-column label="公司" prop="company" width="200" :formatter="formatter" ></el-table-column>
 						<el-table-column label="部门" prop="department" width="150" :formatter="formatter"></el-table-column>
-						<el-table-column label="岗位" prop="position" width="150" :formatter="formatter"></el-table-column>
+						<el-table-column label="岗位" prop="positions" width="150" :formatter="formatter"></el-table-column>
 						<el-table-column label="角色" prop="role" width="130"  :formatter="formatter"></el-table-column>
 						<el-table-column label="状态" prop="status" width="130" sortable='custom'>
 							<template #default="scope">
@@ -121,14 +121,17 @@
 					role:{},
 					company:{},
 					department:{},
-					position:{}
+					positions:{}
 				},
 				auth:{}
 			}
 		},
 		watch: {
-			groupFilterText(val) {
-				this.$refs.group.filter(val);
+			// groupFilterText(val) {
+			// 	this.$refs.group.filter(val);
+			// }
+			form(val){
+				console.log(val)
 			}
 		},
 		mounted() {
@@ -230,26 +233,26 @@
 				this.selection = selection;
 			},
 			//加载树数据
-			async getDepartmentTree(){
-				this.showGrouploading = true;
-				var res = await this.$API.basis_org.department.tree();
-				this.showGrouploading = false;
-				var allNode ={department_code: '', department_name: '所有'}
-				this.department = res.details.rows;
-				this.department.unshift(allNode);
-			},
+			// async getDepartmentTree(){
+			// 	this.showGrouploading = true;
+			// 	var res = await this.$API.basis_org.department.tree();
+			// 	this.showGrouploading = false;
+			// 	var allNode ={department_code: '', department_name: '所有'}
+			// 	this.department = res.details.rows;
+			// 	this.department.unshift(allNode);
+			// },
 			//树过滤
-			groupFilterNode(value, data){
-				if (!value) return true;
-				return data.department_name.indexOf(value) !== -1;
-			},
+			// groupFilterNode(value, data){
+			// 	if (!value) return true;
+			// 	return data.department_name.indexOf(value) !== -1;
+			// },
 			//树点击事件
-			departmentClick(data){
-				var params = {
-					department_code: data.department_code
-				}
-				this.$refs.table.reload(params)
-			},
+			// departmentClick(data){
+			// 	var params = {
+			// 		department_code: data.department_code
+			// 	}
+			// 	this.$refs.table.reload(params)
+			// },
 			//搜索
 			upsearch(){
 				this.$refs.table.upData(this.search)
@@ -302,7 +305,7 @@
 			async getPositions(){
 				var res = await this.$API.common.dimension.get({dim_type:"position"});
 				res.details.forEach(item=>{
-					this.formatData.position[item.code] =item.name
+					this.formatData.positions[item.code] =item.name
 				})
 			},
 			formatter(row,column,cols){

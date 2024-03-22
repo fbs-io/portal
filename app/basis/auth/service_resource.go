@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2024-01-17 21:49:09
  * @LastEditors: reel
- * @LastEditTime: 2024-03-19 06:33:00
+ * @LastEditTime: 2024-03-21 07:33:02
  * @Description: 资源逻辑处理层
  */
 package auth
@@ -117,6 +117,17 @@ func (srv *resourceService) GetByCode(code string) (itme *core.Sources) {
 
 	if srv.codeMap[code] != nil && srv.codeMap[code].Status == 1 {
 		return srv.codeMap[code]
+	}
+	return
+}
+
+// 通过id获取有效的资源
+func (srv *resourceService) GetByID(id uint) (itme *core.Sources) {
+	srv.lock.RLock()
+	defer srv.lock.RUnlock()
+
+	if srv.idMap[id] != nil && srv.idMap[id].Status == 1 {
+		return srv.idMap[id]
 	}
 	return
 }
@@ -361,7 +372,7 @@ func (srv *resourceService) Update(tx *gorm.DB, param *menusUpdateParams) (err e
 // 通过传入的codeMap获取对应的接口, 菜单, 管理菜单列表
 //
 // codeMap用于判断code是否存在
-func (srv *resourceService) GetSource(codeMap map[string]bool) (menuList, manageList []*core.Sources, permissions map[string]bool, err error) {
+func (srv *resourceService) GetSource(resourceIDs map[uint]bool) (menuList, manageList []*core.Sources, permissions map[string]bool, err error) {
 	// 权限表
 	permissions = make(map[string]bool, 100)
 	menuTree := newTree()
@@ -384,18 +395,18 @@ func (srv *resourceService) GetSource(codeMap map[string]bool) (menuList, manage
 
 		// 权限表构成, 取非受限和已有的权限
 		case core.SOURCE_TYPE_PERMISSION:
-			if codeMap != nil && codeMap[item.Code] {
+			if resourceIDs != nil && resourceIDs[item.ID] {
 				permissions[item.Code] = true
 			}
 		}
 		// 前端页面菜单
-		if (codeMap != nil && codeMap[item.Code] && item.IsRouter == core.SOURCE_ROUTER_IS) ||
+		if (resourceIDs != nil && resourceIDs[item.ID] && item.IsRouter == core.SOURCE_ROUTER_IS) ||
 			item.Type == core.SOURCE_TYPE_UNLIMITED ||
 			item.Type == core.SOURCE_TYPE_UNMENU {
 			menuTree.genMenuTree(item)
 		}
 		// 授权和管理菜单
-		if codeMap != nil && codeMap[item.Code] && (item.Type == core.SOURCE_TYPE_MENU || item.Type == core.SOURCE_TYPE_PERMISSION) {
+		if resourceIDs != nil && resourceIDs[item.ID] && (item.Type == core.SOURCE_TYPE_MENU || item.Type == core.SOURCE_TYPE_PERMISSION) {
 			manageTree.genMenuTree(item)
 		}
 

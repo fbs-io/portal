@@ -19,7 +19,7 @@
 			</el-tab-pane>
 			<el-tab-pane :label="tablePane.menuPermission">
 				<div class="treeMain" >
-					<el-tree ref="menu" node-key="code" :data="menu.list" :props="menu.props" show-checkbox></el-tree>
+					<el-tree ref="menu" node-key="id" :data="menu.list" :props="menu.props" show-checkbox></el-tree>
 				</div>
 			</el-tab-pane>
 			<!-- TODO:完善数据权限, 首页画面, 首页组件 -->

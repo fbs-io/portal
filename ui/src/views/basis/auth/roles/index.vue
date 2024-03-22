@@ -3,7 +3,7 @@
  * @Date: 2023-08-31 21:51:57
  * @LastEditors: reel
 <<<<<<< HEAD:ui/src/views/basis/auth/roles/index.vue
- * @LastEditTime: 2023-10-06 20:50:16
+ * @LastEditTime: 2024-03-21 07:55:21
 =======
  * @LastEditTime: 2023-10-29 08:08:55
 >>>>>>> feat-org:ui/src/views/basis/roles/index.vue
@@ -142,7 +142,7 @@
 			//批量删除
 			async batch_del(){
 				var reqData = []
-				this.$confirm(`确定删除选中的 ${this.selection.length} 项吗？`, '提示', {
+				await this.$confirm(`确定删除选中的 ${this.selection.length} 项吗？`, '提示', {
 					type: 'warning'
 				}).then(() => {
 					this.selection.forEach(item => {
@@ -156,9 +156,9 @@
 					const loading = this.$loading();
 					this.$API.basis_auth.roles.delete({id: reqData})
 					loading.close();
-					this.$refs.table.reload()
-				}).catch(() => {
+					// this.$refs.table.reload()
 				})
+
 			},
 
 			//表格选择后回调事件

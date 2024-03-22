@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2024-01-20 20:24:52
  * @LastEditors: reel
- * @LastEditTime: 2024-01-20 21:15:09
+ * @LastEditTime: 2024-03-21 06:59:26
  * @Description: 用户相关关系表
  */
 
@@ -37,6 +37,18 @@ type RlatUserRole struct {
 
 func (model *RlatUserRole) TableName() string {
 	return consts.TABLE_BASIS_RLAT_USER_ROLE
+}
+
+// 角色和资源关系表
+type RlatRoleResource struct {
+	RoleCode     string `gorm:"comment:角色code;index"`
+	ResourceCode string `gorm:"comment:资源code;index"`
+	rdb.Model
+	rdb.ShardingModel
+}
+
+func (model *RlatRoleResource) TableName() string {
+	return consts.TABLE_BASIS_RLAT_ROLE_RESOURCE
 }
 
 // 用户和公司关系表

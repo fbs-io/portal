@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2024-03-18 22:02:52
+ * @LastEditTime: 2024-03-22 21:53:21
  * @Description: 请填写简介
  */
 package auth
@@ -50,18 +50,17 @@ func login() core.HandlerFunc {
 		// session 设置
 		sessionKey := session.GenSessionKey()
 		ctx.Core().Session().SetWithCsrfToken(ctx.Ctx().Writer, sessionKey, user.Account)
-		menu, _, permission, _ := UserService.GetResourcePermission(ctx.TX(), user.Account)
+		menu, _, permissions, _ := UserService.GetResourcePermission(ctx.TX(), user.Account)
 		result := map[string]interface{}{
 			"token":       sessionKey,
 			"userInfo":    user.UserInfo(),
 			"menu":        menu,
-			"permissions": permission,
+			"permissions": permissions,
 		}
 		if p.Company == "" && len(user.Company) > 0 {
 			p.Company = user.Company[0]
-		} else {
-			p.Company = ""
 		}
+		user.Permissions[p.Company] = permissions
 		result["company"] = "123"
 		// 设置公司code缓存
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(user.Account), p.Company)
@@ -84,11 +83,17 @@ func setDefaultCompany() core.HandlerFunc {
 		param := ctx.CtxGetParams().(*setDefaultCompanyParams)
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(param.Account), param.Company)
 		ctx.CtxSet(core.CTX_SHARDING_KEY, param.Company)
-		menu, _, Permissions, _ := UserService.GetResourcePermission(ctx.NewTX(), param.Account)
+		user := UserService.GetByCode(param.Account)
+		if user == nil {
+			ctx.JSON(errno.ERRNO_AUTH_NOT_LOGIN)
+			return
+		}
+		menu, _, permissions, _ := UserService.GetResourcePermission(ctx.NewTX(), param.Account)
 		result := map[string]interface{}{
 			"menu":        menu,
-			"permissions": Permissions,
+			"permissions": permissions,
 		}
+		user.Permissions[param.Company] = permissions
 		ctx.JSON(errno.ERRNO_OK.WrapData(result))
 	}
 }

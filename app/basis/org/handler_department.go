@@ -55,7 +55,6 @@ func departmentEdit() core.HandlerFunc {
 // 树结构查询用于数据展示, 不需要过滤等
 func getDepartmentTree() core.HandlerFunc {
 	return func(ctx core.Context) {
-
 		modelTree := DepartmentService.TreeList(ctx.TX())
 		data := map[string]interface{}{
 			"rows": modelTree,

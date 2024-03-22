@@ -110,6 +110,7 @@
 					password2:"",
 					email:"",
 				},
+				form2:{},
 				//验证规则
 				rules: {
 					// avatar:[
@@ -140,12 +141,15 @@
 							}
 						}}
 					],
-					position: [
+					position1: [
 						{required: true, message: '请选择所属岗位'}
 					],
-					group: [
-						{required: true, message: '请选择所属角色', trigger: 'change'}
-					]
+					role: [
+						{required: true, message: '请选择所属角色', type: "Array"}
+					],
+					company: [
+						{required: true, message: '请选择所属公司', type: "Array"}
+					],
 				},
 				//所需数据选项
 				companies: [],
@@ -253,10 +257,8 @@
 										account: "",
 										avatar: "",
 										nick_name: "",
-										dept: "",
 										role: "",
 										company:[],
-										department:"",
 										super:"N",
 										email:"",
 										position1:"",
@@ -273,14 +275,26 @@
 								account: this.form.account,
 								avatar: this.form.avatar,
 								nick_name: this.form.nick_name,
-								dept: this.form.dept,
-								company: this.form.company,
-								role: this.form.role,
 								super: this.form.super,
 								email: this.form.email,
-								position1:this.form.position1,
-								position2:this.form.position2,
+								company: null,
+								role: null,
+								position1: "",
+								position2: null,
 							}
+							// 如果一样重置为空, 不更新
+							if (this.form.position1 != this.form2.position1 || this.form.position2 != this.form2.position2){
+								data.position1 = this.form.position1
+								data.position2 = this.form.position2
+							}
+							if (this.form.company != this.form2.company){
+								data.company = this.form.company
+							}
+							if (this.form.role != this.form2.role){
+								data.role = this.form.role
+							}
+							
+							
 							var res = await this.$API.basis_auth.users.edit(data);
 							this.isSaveing = false;
 							if (res.errno==0){
@@ -297,6 +311,10 @@
 			setData(data){
 				//可以和上面一样单个注入，也可以像下面一样直接合并进去
 				Object.assign(this.form, data)
+				this.form2["position1"] = data.position1
+				this.form2["position2"] = data.position2
+				this.form2["company"] = data.company
+				this.form2["role"] = data.role
 			},
 
 		}

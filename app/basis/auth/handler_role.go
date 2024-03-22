@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-08-30 07:36:25
  * @LastEditors: reel
- * @LastEditTime: 2024-01-20 21:24:07
+ * @LastEditTime: 2024-03-21 07:42:37
  * @Description: 角色相关api逻辑
  */
 package auth
@@ -85,7 +85,7 @@ func rolesDelete() core.HandlerFunc {
 	return func(ctx core.Context) {
 		param := ctx.CtxGetParams().(*rdb.DeleteParams)
 
-		err := RoleService.Delete(ctx.TX(), param)
+		err := RoleService.Delete(ctx.NewTX(), param)
 		if err != nil {
 			ctx.JSON(errno.ERRNO_RDB_DELETE.WrapError(err))
 			return
@@ -97,13 +97,11 @@ func rolesDelete() core.HandlerFunc {
 // 菜单和权限查询, 返回树表结构
 func menusQueryWithPermission() core.HandlerFunc {
 	return func(ctx core.Context) {
-		// user := GetUser(ctx.Auth(), ctx, REFRESH_NOT)
-
-		// menus, _, err := ResourceService.GetSource(ctx, user.Roles, QUERY_MENU_MODE_MANAGE)
-		// if err != nil {
-		// 	ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
-		// 	return
-		// }
-		// ctx.JSON(errno.ERRNO_OK.WrapData(menus))
+		_, manageList, _, err := UserService.GetResourcePermission(ctx.TX(), ctx.Auth())
+		if err != nil {
+			ctx.JSON(errno.ERRNO_RDB_QUERY.WrapError(err))
+			return
+		}
+		ctx.JSON(errno.ERRNO_OK.WrapData(manageList))
 	}
 }

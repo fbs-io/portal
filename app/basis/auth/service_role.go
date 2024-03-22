@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2024-01-17 07:04:34
  * @LastEditors: reel
- * @LastEditTime: 2024-03-13 07:03:41
+ * @LastEditTime: 2024-03-21 20:59:40
  * @Description: 角色表逻辑处理层
  */
 package auth
@@ -211,7 +211,7 @@ func (srv *roleService) Query(tx *gorm.DB, param *rolesQueryParams) (data interf
 	roles := make([]*Role, 0, 100)
 
 	var count int64
-	err = tx.Model(role).Find(&roles).Offset(-1).Limit(-1).Count(&count).Error
+	err = tx.Model(role).Order("sort, id").Find(&roles).Offset(-1).Limit(-1).Count(&count).Error
 	if err != nil {
 		return
 	}
