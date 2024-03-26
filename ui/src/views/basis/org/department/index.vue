@@ -1,0 +1,200 @@
+<template>
+	<el-container>
+		<el-header>
+			<div class="left-panel">
+				<el-button type="primary" v-auth="auth?auth.put:auth" icon="el-icon-plus" @click="add"></el-button>
+				<el-button type="danger" v-auth="auth?auth.delete:auth" plain icon="el-icon-delete" :disabled="selection.length==0" @click="batch_del"></el-button>
+			</div>
+			<!-- 无需过滤 -->
+			<!-- <div class="right-panel">
+				<div class="right-panel-search">
+					<el-input v-model="search.department_name" placeholder="部门名称" clearable></el-input>
+					<el-button type="primary"  v-auth="auth?auth.get:auth"  icon="el-icon-search" @click="upsearch"></el-button>
+				</div>
+			</div> -->
+		</el-header>
+		<el-main class="nopadding">
+			<scTable ref="table" :apiObj="apiObj" row-key="id" @selection-change="selectionChange" stripe>
+				<el-table-column type="selection" width="50"></el-table-column>
+				<el-table-column label="部门编码"  prop="department_code" width="200"></el-table-column>
+				<el-table-column label="部门名称"  prop="department_name" width="150"></el-table-column>
+				<el-table-column label="部门描述"  prop="department_comment" width="150"></el-table-column>
+				<el-table-column label="部门层级"  prop="department_level" width="120"></el-table-column>
+				<el-table-column label="自定义层级" prop="department_custom_level" width="120"></el-table-column>
+				<el-table-column label="部门全路径" prop="department_full_path" width="200"></el-table-column>
+				<el-table-column label="状态" prop="status" width="80">
+					<template #default="scope">
+						<el-switch v-model="scope.row.status" @change="changeSwitch($event, scope.row)" :loading="scope.row.$switch_status" :active-value="1" :inactive-value="-1"></el-switch>
+					</template>
+				</el-table-column>
+				<el-table-column label="创建时间" prop="created_at" :formatter="timestampToTime" width="180"></el-table-column>
+				<el-table-column label="创建人" prop="created_by"  width="100"></el-table-column>
+				<el-table-column label="更新时间" prop="updated_at" :formatter="timestampToTime" width="180"></el-table-column>
+				<el-table-column label="更新人" prop="updated_by"  width="100"></el-table-column>
+				<el-table-column label="操作" fixed="right" align="right" width="170">
+					<template #default="scope">
+						<el-button-group>
+							<el-button text type="primary"  v-auth="auth?auth.post:auth"  size="small" @click="table_edit(scope.row, scope.$index)">编辑</el-button>
+							<el-popconfirm title="确定删除吗？"  @confirm="table_del(scope.row, scope.$index)">
+								<template #reference>
+									<el-button text type="primary"  v-auth="auth?auth.delete:auth"  size="small">删除</el-button>
+								</template>
+							</el-popconfirm>
+						</el-button-group>
+					</template>
+				</el-table-column>
+
+			</scTable>
+		</el-main>
+	</el-container>
+
+	<save-dialog v-if="dialog.save" ref="saveDialog" @success="handleSuccess" @closed="dialog.save=false"></save-dialog>
+
+</template>
+
+
+<script>
+	import saveDialog from './save'
+
+	export default {
+		name: 'user',
+		components: {
+			saveDialog
+		},
+		data() {
+			return {
+				dialog: {
+					save: false
+				},
+				showGrouploading: false,
+				group: [],
+				apiObj: this.$API.basis_org.department.tree,
+				selection: [],
+				search: {
+					company_name: null
+				},
+				auth:{
+					put: '',
+					post: '',
+					get: '',
+					delete: '',
+				}
+			}
+		},
+		// watch: {
+
+		// },
+		mounted() {
+			this.getUiPermission()
+		},
+		methods: {
+			//添加
+			add(){
+				this.dialog.save = true
+				this.$nextTick(() => {
+					this.$refs.saveDialog.open()
+					this.$refs.saveDialog.getDepartmentTree()
+				})
+			},
+			//编辑
+			table_edit(row){
+				this.dialog.save = true
+				this.$nextTick(() => {
+					this.$refs.saveDialog.open('edit').setData(row)
+					this.$refs.saveDialog.getDepartmentTree()
+				})
+			},
+			//查看
+			table_show(row){
+				this.dialog.save = true
+				this.$nextTick(() => {
+					this.$refs.saveDialog.open('show').setData(row)
+				})
+			},
+			select_id(){
+				var reqData = []
+				this.selection.forEach(item => {
+					reqData.unshift(item.id)
+				})
+				return reqData
+			},	
+			//删除
+			async table_del(row, index){
+				var reqData = {id: [row.id]}
+				await this.$API.basis_org.department.delete(reqData);
+				this.$refs.table.tableData.splice(index, 1)
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
+			},
+			//批量删除
+			async batch_del(){
+				var reqData = []
+				this.$confirm(`确定删除选中的 ${this.selection.length} 项吗？`, '提示', {
+					type: 'warning'
+				}).then(() => {
+					this.selection.forEach(item => {
+						this.$refs.table.tableData.forEach((itemI, indexI) => {
+							if (item.id === itemI.id) {
+								this.$refs.table.tableData.splice(indexI, 1)
+							}
+						})
+						reqData.unshift(item.id)
+					})
+					const loading = this.$loading();
+					this.$API.basis_org.department.delete({id: reqData})
+					loading.close();
+					setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
+					
+				}).catch(() => {
+				})
+			},
+
+			//表格选择后回调事件
+			selectionChange(selection){
+				this.selection = selection;
+			},
+
+			//搜索
+			upsearch(){
+				this.$refs.table.upData(this.search)
+			},
+			// //本地更新数据
+			handleSuccess(data, mode){
+				setTimeout(()=>{
+						this.$refs.table.reload()
+					}, 500)
+			},
+			// 时间序列化
+			timestampToTime (row, column) {
+				var date = new Date(row[column.property]) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
+				var Y = date.getFullYear() + '-'
+				var M =  String(date.getMonth()+1).padStart(2,"0") + '-'
+				var D = String(date.getDate()).padStart(2,"0") + ' '
+				var h = String(date.getHours()).padStart(2,"0") + ':'
+				var m = String(date.getMinutes()).padStart(2,"0") + ':'
+				var s = String(date.getSeconds()).padStart(2,"0")
+				return Y+M+D+h+m+s
+			},
+			//表格内开关
+			changeSwitch(val, row){
+				row.status = row.status == 1 ? 1 : -1
+				row.$switch_status = true;
+				setTimeout(()=>{
+					delete row.$switch_status;
+					var res = this.$API.basis_org.department.edit({id:[row.id],status:row.status});
+				}, 1000)
+			},
+			async getUiPermission(){
+				var path = this.$router.currentRoute.value.fullPath
+				var res = await this.$API.common.uiPermissions.get({path:path})
+				this.auth = res.details
+			},
+		}
+	}
+</script>
+
+<style>
+</style>
