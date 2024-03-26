@@ -2,7 +2,7 @@
  * @Author: reel
  * @Date: 2023-07-18 21:46:02
  * @LastEditors: reel
- * @LastEditTime: 2024-03-22 21:53:21
+ * @LastEditTime: 2024-03-26 20:06:16
  * @Description: 请填写简介
  */
 package auth
@@ -61,7 +61,7 @@ func login() core.HandlerFunc {
 			p.Company = user.Company[0]
 		}
 		user.Permissions[p.Company] = permissions
-		result["company"] = "123"
+		result["company"] = p.Company
 		// 设置公司code缓存
 		ctx.Core().Cache().Set(consts.GenUserCompanyKey(user.Account), p.Company)
 		ctx.JSON(errno.ERRNO_OK.WrapData(result).Notify())

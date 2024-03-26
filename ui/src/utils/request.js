@@ -58,7 +58,21 @@ axios.interceptors.response.use(
 						isReloadLogin = false
 					}).catch(() => {})
 			}
+		}else if (response.data.errno ==40005){
+			if (!isReloadLogin){
+				isReloadLogin = true
+				ElMessageBox.confirm('当前用户已在其他站点登陆, 请确认是本人操作', '用户已登录', {
+					type: 'error',
+					closeOnClickModal: false,
+					center: true,
+					confirmButtonText: '重新登录'
+				}).then(() => {
+					router.replace({path: '/login'});
+					isReloadLogin = false
+				}).catch(() => {})
+			}
 		}else{
+				console.log()
 				ElNotification.error({
 					title: '请求发生错误',
 					message: response.data.message
